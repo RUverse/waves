@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { fly } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import { Button } from '$lib/components/ui/button';
   import { Label } from '$lib/components/ui/label';
   import { Slider } from '$lib/components/ui/slider';
@@ -60,9 +62,10 @@
 <div class="absolute bottom-1 left-1 flex items-end gap-2">
   <!-- Menu Button (only shown when panel is hidden) -->
   {#if !showPanel}
-    <Button 
+    <Button
       onclick={onTogglePanel}
-      class="w-10 h-10 p-0 m-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white border border-white border-opacity-30 flex items-center justify-center transition-all"
+      variant="ghost"
+      class="glass-btn w-10 h-10 p-0 m-2 rounded-xl flex items-center justify-center"
       title="Open panel"
     >
       <!-- Hamburger Menu Icon -->
@@ -76,27 +79,31 @@
 
   <!-- Control Panel -->
   {#if showPanel}
-    <div class="control-panel flex flex-col rounded bg-black bg-opacity-80 p-2 m-0 gap-2">
+    <div
+      class="control-panel glass-surface flex flex-col rounded-2xl p-3 m-0 gap-3"
+      transition:fly={{ x: -24, duration: 260, easing: cubicOut }}
+    >
       <!-- Header -->
-      <h2 class="text-white text-sm font-semibold tracking-wider uppercase opacity-70">waves</h2>
+      <h2 class="text-white/60 text-xs font-semibold tracking-[0.2em] uppercase px-1">waves</h2>
 
       <!-- Main Layout: Actions (Left) and Content (Right) -->
       <div class="flex flex-row gap-2">
         <!-- Left Sidebar - Actions Buttons (Vertical) -->
-        <div class="flex flex-col justify-between gap-2">
+        <div class="flex flex-col justify-between gap-2 w-32 shrink-0">
           <Actions {onReset} {onResetConfig} {onSaveConfig} {onSaveConfigAsNew} {onOpenSettings} {onOpenExport} {activeWaveId} />
           
           <!-- Collapse Button (at bottom) -->
-          <Button 
+          <Button
             onclick={onTogglePanel}
-            variant="outline"
-            class="bg-black opacity-70 text-white w-10 h-10 p-0 flex items-center justify-center"
+            variant="ghost"
+            class="glass-btn flex items-center justify-start gap-2.5 w-full h-10 px-3 rounded-lg text-sm font-medium"
             title="Collapse panel"
           >
             <!-- Chevron Left Icon -->
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <polyline points="13,5 8,10 13,15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </svg>
+            <span>Collapse</span>
           </Button>
         </div>
 
@@ -147,33 +154,33 @@
     />
 
     <!-- Color Pickers -->
-    <div class="flex items-center space-x-2 pt-2 border-t border-white border-opacity-20">
-      <ColorPicker 
-        label="Wave" 
-        bind:value={waveColor} 
+    <div class="flex items-center space-x-2 pt-3 border-t border-white/10">
+      <ColorPicker
+        label="Wave"
+        bind:value={waveColor}
         onChange={(color) => waveColor = color}
       />
       {#if nerdMode}
-        <Button 
+        <Button
           onclick={onResetWaveColor}
-          variant="outline"
-          class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+          variant="ghost"
+          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
           title="Reset to default"
         >
           <ResetIcon />
         </Button>
       {/if}
       <div class="mx-2"></div>
-      <ColorPicker 
-        label="Background" 
-        bind:value={backgroundColor} 
+      <ColorPicker
+        label="Background"
+        bind:value={backgroundColor}
         onChange={(color) => backgroundColor = color}
       />
       {#if nerdMode}
-        <Button 
+        <Button
           onclick={onResetBackgroundColor}
-          variant="outline"
-          class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+          variant="ghost"
+          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
           title="Reset to default"
         >
           <ResetIcon />
@@ -186,38 +193,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  /* View transition names for animated elements */
-  :global(.control-panel) {
-    view-transition-name: control-panel;
-  }
-
-  /* Slide animation for the panel */
-  @keyframes slide-out {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-120%);
-    }
-  }
-
-  @keyframes slide-in {
-    from {
-      transform: translateX(-120%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
-
-  /* Apply animations to view transitions */
-  :global(::view-transition-old(control-panel)) {
-    animation: 0.3s ease-out both slide-out;
-  }
-
-  :global(::view-transition-new(control-panel)) {
-    animation: 0.3s ease-out both slide-in;
-  }
-</style>

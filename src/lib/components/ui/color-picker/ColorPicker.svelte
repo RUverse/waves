@@ -16,7 +16,7 @@
       type="color"
       {value}
       on:input={handleChange}
-      class="w-10 h-10 rounded cursor-pointer border border-white border-opacity-30 bg-transparent"
+      class="color-swatch w-10 h-10 rounded cursor-pointer bg-transparent"
       title={label}
     />
   </div>
@@ -30,18 +30,19 @@
     border: none;
     cursor: pointer;
   }
-  
+
   input[type="color"]::-webkit-color-swatch-wrapper {
     padding: 2px;
   }
-  
+
+  /* Narrow gray border so black/dark swatches stay visible on the dark panel */
   input[type="color"]::-webkit-color-swatch {
-    border: none;
+    border: 1px solid rgba(150, 150, 150, 0.9);
     border-radius: 4px;
   }
-  
+
   input[type="color"]::-moz-color-swatch {
-    border: none;
+    border: 1px solid rgba(150, 150, 150, 0.9);
     border-radius: 4px;
   }
 </style>

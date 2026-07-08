@@ -18,28 +18,42 @@
   {step}
   {disabled}
   class={cn(
-    "w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-thumb",
+    "w-full h-1.5 rounded-full appearance-none cursor-pointer slider-track",
     disabled && "opacity-50 cursor-not-allowed",
     className
   )}
 />
 
 <style>
+  .slider-track {
+    background: rgba(255, 255, 255, 0.14);
+    transition: background 0.15s ease;
+  }
+  .slider-track:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
   input[type="range"]::-webkit-slider-thumb {
     appearance: none;
-    width: 16px;
-    height: 16px;
-    background: white;
+    width: 15px;
+    height: 15px;
+    background: #fff;
     cursor: pointer;
     border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    transition: transform 0.12s ease;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
   }
 
   input[type="range"]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: white;
+    width: 15px;
+    height: 15px;
+    background: #fff;
     cursor: pointer;
     border-radius: 50%;
     border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   }
 </style>
