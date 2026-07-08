@@ -8,10 +8,12 @@ import {
   DEFAULT_PERIOD,
   DEFAULT_ROTATION,
   DEFAULT_SPACING,
+  DEFAULT_THICKNESS,
   DEFAULT_WAVE_COLOR,
   DEFAULT_BACKGROUND_COLOR,
   WAVE_GENERATION,
-  CANVAS_SETTINGS
+  CANVAS_SETTINGS,
+  THICKNESS_RANGE
 } from './constants';
 
 /**
@@ -91,6 +93,10 @@ export function resetSpacing(): number {
   return DEFAULT_SPACING;
 }
 
+export function resetThickness(): number {
+  return DEFAULT_THICKNESS;
+}
+
 export function resetWaveCount(): number {
   return DEFAULT_WAVE_COUNT;
 }
@@ -144,6 +150,10 @@ export function generateCachedVariations(
   return variations;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 /**
  * Creates a p5 sketch function for rendering waves
  */
@@ -155,6 +165,7 @@ export function createWaveSketch(
   getPeriod: () => number,
   getRotation: () => number,
   getSpacing: () => number,
+  getThickness: () => number,
   getWaveColor: () => string,
   getBackgroundColor: () => string,
   getOffset: () => number,
@@ -163,7 +174,8 @@ export function createWaveSketch(
   getCachedFrequencyVariations: () => number[] = () => [],
   getCachedPeriodVariations: () => number[] = () => [],
   getCachedRotationVariations: () => number[] = () => [],
-  getCachedSpacingVariations: () => number[] = () => []
+  getCachedSpacingVariations: () => number[] = () => [],
+  getCachedThicknessVariations: () => number[] = () => []
 ) {
   return (p: p5) => {
     p.setup = () => {
@@ -182,12 +194,14 @@ export function createWaveSketch(
       const basePeriod = getPeriod();
       const baseRotation = getRotation();
       const baseSpacing = getSpacing();
+      const baseThickness = getThickness();
       const offset = getOffset();
       
       const cachedWavelengthVariations = getCachedWavelengthVariations();
       const cachedFrequencyVariations = getCachedFrequencyVariations();
       const cachedRotationVariations = getCachedRotationVariations();
       const cachedSpacingVariations = getCachedSpacingVariations();
+      const cachedThicknessVariations = getCachedThicknessVariations();
 
       p.background(backgroundColor);
       p.stroke(waveColor);
@@ -211,10 +225,21 @@ export function createWaveSketch(
         (max, a) => Math.max(max, Math.abs(a ?? 0)),
         0
       );
+      const maxThickness = waveCount > 0
+        ? Math.max(
+            ...Array.from({ length: waveCount }, (_, idx) =>
+              clamp(
+                baseThickness + (cachedThicknessVariations[idx] ?? 0),
+                THICKNESS_RANGE.min,
+                THICKNESS_RANGE.max
+              )
+            )
+          )
+        : THICKNESS_RANGE.min;
       const coverRadius =
         Math.hypot(p.width, p.height) / 2 +
         maxAmplitude +
-        CANVAS_SETTINGS.strokeWeight;
+        maxThickness;
 
       // Range of wave indices whose base position falls within the bounding circle.
       // Indices outside [0, waveCount) are wrapped so the extra waves that fill the
@@ -233,12 +258,18 @@ export function createWaveSketch(
         const waveWavelength = baseWavelength + (cachedWavelengthVariations[idx] ?? 0);
         const waveFrequency = baseFrequency + (cachedFrequencyVariations[idx] ?? 0);
         const waveRotation = baseRotation + (cachedRotationVariations[idx] ?? 0);
+        const waveThickness = clamp(
+          baseThickness + (cachedThicknessVariations[idx] ?? 0),
+          THICKNESS_RANGE.min,
+          THICKNESS_RANGE.max
+        );
         const rotationRadians = waveRotation * Math.PI / 180;
         const rotationCos = Math.cos(rotationRadians);
         const rotationSin = Math.sin(rotationRadians);
 
         const x = startOffset + adjustedSpacing * (i + 1);
 
+        p.strokeWeight(waveThickness);
         p.beginShape();
         for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += CANVAS_SETTINGS.vertexStep) {
           const waveX = x + p.sin(y * waveWavelength + offset + waveFrequency) * amplitude;
@@ -276,6 +307,7 @@ export function renderWaveToCanvas(
   period: number,
   rotation: number,
   spacing: number,
+  thickness: number,
   waveColor: string,
   backgroundColor: string,
   offset: number,
@@ -284,6 +316,7 @@ export function renderWaveToCanvas(
   cachedPeriodVariations: number[],
   cachedRotationVariations: number[],
   cachedSpacingVariations: number[],
+  cachedThicknessVariations: number[],
   originalCanvasWidth: number = width,
   originalCanvasHeight: number = height
 ): HTMLCanvasElement | null {
@@ -309,7 +342,7 @@ export function renderWaveToCanvas(
     
     // Scale stroke weight proportionally (use average scale)
     const avgScale = (scaleX + scaleY) / 2;
-    ctx.lineWidth = CANVAS_SETTINGS.strokeWeight * avgScale;
+    ctx.lineWidth = clamp(thickness, THICKNESS_RANGE.min, THICKNESS_RANGE.max) * avgScale;
 
     // Calculate spacing based on original canvas width, then scale to export dimensions
     // This ensures the waves appear at the same visual positions regardless of export size
@@ -334,8 +367,19 @@ export function renderWaveToCanvas(
       (max, a) => Math.max(max, Math.abs((a ?? 0) * scaleX)),
       0
     );
+    const maxScaledThickness = waveCount > 0
+      ? Math.max(
+          ...Array.from({ length: waveCount }, (_, idx) =>
+            clamp(
+              thickness + (cachedThicknessVariations[idx] ?? 0),
+              THICKNESS_RANGE.min,
+              THICKNESS_RANGE.max
+            ) * avgScale
+          )
+        )
+      : THICKNESS_RANGE.min * avgScale;
     const coverRadius =
-      Math.hypot(width, height) / 2 + maxScaledAmplitude + ctx.lineWidth;
+      Math.hypot(width, height) / 2 + maxScaledAmplitude + maxScaledThickness;
 
     let iMin = 0;
     let iMax = waveCount - 1;
@@ -352,12 +396,18 @@ export function renderWaveToCanvas(
       const waveWavelength = wavelength + (cachedWavelengthVariations[idx] ?? 0);
       const waveFrequency = frequency + (cachedFrequencyVariations[idx] ?? 0);
       const waveRotation = rotation + (cachedRotationVariations[idx] ?? 0);
+      const waveThickness = clamp(
+        thickness + (cachedThicknessVariations[idx] ?? 0),
+        THICKNESS_RANGE.min,
+        THICKNESS_RANGE.max
+      ) * avgScale;
       const rotationRadians = waveRotation * Math.PI / 180;
       const rotationCos = Math.cos(rotationRadians);
       const rotationSin = Math.sin(rotationRadians);
 
       const x = scaledStartOffset + scaledAdjustedSpacing * (i + 1);
 
+      ctx.lineWidth = waveThickness;
       ctx.beginPath();
       let first = true;
       for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += scaledVertexStep) {
