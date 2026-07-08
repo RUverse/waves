@@ -186,7 +186,6 @@ export function createWaveSketch(
       
       const cachedWavelengthVariations = getCachedWavelengthVariations();
       const cachedFrequencyVariations = getCachedFrequencyVariations();
-      const cachedPeriodVariations = getCachedPeriodVariations();
       const cachedRotationVariations = getCachedRotationVariations();
       const cachedSpacingVariations = getCachedSpacingVariations();
 
@@ -199,23 +198,50 @@ export function createWaveSketch(
       const totalWidth = adjustedSpacing * waveCount;
       const startOffset = (p.width - totalWidth) / 2;
 
-      for (let i = 0; i < waveCount && i < amplitudes.length; i++) {
-        // Apply cached per-wave variations to each attribute
-        const waveWavelength = baseWavelength + (cachedWavelengthVariations[i] ?? 0);
-        const waveFrequency = baseFrequency + (cachedFrequencyVariations[i] ?? 0);
-        const wavePeriod = basePeriod + (cachedPeriodVariations[i] ?? 0);
-        const waveRotation = baseRotation + (cachedRotationVariations[i] ?? 0);
+      const centerX = p.width / 2;
+      const centerY = p.height / 2;
+
+      // Each wave is a near-vertical line that we rotate point-by-point around the
+      // canvas center. A line only as tall as the canvas leaves triangular gaps at
+      // the edges once it's tilted ("cutout"). To keep the canvas fully covered at
+      // ANY rotation, we extend both the length of every wave and the number of
+      // waves so the pattern always fills the canvas's bounding circle (half the
+      // diagonal, plus margin for amplitude and stroke width).
+      const maxAmplitude = amplitudes.reduce(
+        (max, a) => Math.max(max, Math.abs(a ?? 0)),
+        0
+      );
+      const coverRadius =
+        Math.hypot(p.width, p.height) / 2 +
+        maxAmplitude +
+        CANVAS_SETTINGS.strokeWeight;
+
+      // Range of wave indices whose base position falls within the bounding circle.
+      // Indices outside [0, waveCount) are wrapped so the extra waves that fill the
+      // corners seamlessly tile the same (possibly varied) pattern.
+      let iMin = 0;
+      let iMax = waveCount - 1;
+      if (waveCount > 0 && adjustedSpacing > 0) {
+        iMin = Math.floor((centerX - coverRadius - startOffset) / adjustedSpacing - 1) - 1;
+        iMax = Math.ceil((centerX + coverRadius - startOffset) / adjustedSpacing - 1) + 1;
+      }
+
+      for (let i = iMin; i <= iMax; i++) {
+        // Wrap index into the valid range for per-wave attributes
+        const idx = ((i % waveCount) + waveCount) % waveCount;
+        const amplitude = amplitudes[idx] ?? 0;
+        const waveWavelength = baseWavelength + (cachedWavelengthVariations[idx] ?? 0);
+        const waveFrequency = baseFrequency + (cachedFrequencyVariations[idx] ?? 0);
+        const waveRotation = baseRotation + (cachedRotationVariations[idx] ?? 0);
         const rotationRadians = waveRotation * Math.PI / 180;
         const rotationCos = Math.cos(rotationRadians);
         const rotationSin = Math.sin(rotationRadians);
-        
-        let x = startOffset + adjustedSpacing * (i + 1);
-        const centerX = p.width / 2;
-        const centerY = p.height / 2;
+
+        const x = startOffset + adjustedSpacing * (i + 1);
 
         p.beginShape();
-        for (let y = 0; y <= p.height; y += CANVAS_SETTINGS.vertexStep) {
-          let waveX = x + p.sin(y * waveWavelength + offset + waveFrequency) * amplitudes[i];
+        for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += CANVAS_SETTINGS.vertexStep) {
+          const waveX = x + p.sin(y * waveWavelength + offset + waveFrequency) * amplitude;
           const dx = waveX - centerX;
           const dy = y - centerY;
           const rotatedX = centerX + dx * rotationCos - dy * rotationSin;
@@ -299,31 +325,50 @@ export function renderWaveToCanvas(
     // Scale vertex step for smooth rendering at different resolutions
     const scaledVertexStep = Math.max(1, Math.round(CANVAS_SETTINGS.vertexStep / avgScale));
 
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Extend the wave length and count so the pattern fully covers the canvas at
+    // any rotation, avoiding edge cutouts (mirrors createWaveSketch).
+    const maxScaledAmplitude = amplitudes.reduce(
+      (max, a) => Math.max(max, Math.abs((a ?? 0) * scaleX)),
+      0
+    );
+    const coverRadius =
+      Math.hypot(width, height) / 2 + maxScaledAmplitude + ctx.lineWidth;
+
+    let iMin = 0;
+    let iMax = waveCount - 1;
+    if (waveCount > 0 && scaledAdjustedSpacing > 0) {
+      iMin = Math.floor((centerX - coverRadius - scaledStartOffset) / scaledAdjustedSpacing - 1) - 1;
+      iMax = Math.ceil((centerX + coverRadius - scaledStartOffset) / scaledAdjustedSpacing - 1) + 1;
+    }
+
     // Draw each wave
-    for (let i = 0; i < waveCount && i < amplitudes.length; i++) {
-      const waveWavelength = wavelength + (cachedWavelengthVariations[i] ?? 0);
-      const waveFrequency = frequency + (cachedFrequencyVariations[i] ?? 0);
-      const wavePeriod = period + (cachedPeriodVariations[i] ?? 0);
-      const waveRotation = rotation + (cachedRotationVariations[i] ?? 0);
+    for (let i = iMin; i <= iMax; i++) {
+      // Wrap index into the valid range so the extra corner-filling waves tile
+      const idx = ((i % waveCount) + waveCount) % waveCount;
+      const scaledAmplitude = (amplitudes[idx] ?? 0) * scaleX;
+      const waveWavelength = wavelength + (cachedWavelengthVariations[idx] ?? 0);
+      const waveFrequency = frequency + (cachedFrequencyVariations[idx] ?? 0);
+      const waveRotation = rotation + (cachedRotationVariations[idx] ?? 0);
       const rotationRadians = waveRotation * Math.PI / 180;
       const rotationCos = Math.cos(rotationRadians);
       const rotationSin = Math.sin(rotationRadians);
 
-      let x = scaledStartOffset + scaledAdjustedSpacing * (i + 1);
-      const centerX = width / 2;
-      const centerY = height / 2;
+      const x = scaledStartOffset + scaledAdjustedSpacing * (i + 1);
 
       ctx.beginPath();
-      for (let y = 0; y <= height; y += scaledVertexStep) {
-        // Scale amplitude based on the scale ratio
-        const scaledAmplitude = amplitudes[i] * scaleX;
+      let first = true;
+      for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += scaledVertexStep) {
         const waveX = x + Math.sin(y * waveWavelength + offset + waveFrequency) * scaledAmplitude;
         const dx = waveX - centerX;
         const dy = y - centerY;
         const rotatedX = centerX + dx * rotationCos - dy * rotationSin;
         const rotatedY = centerY + dx * rotationSin + dy * rotationCos;
-        if (y === 0) {
+        if (first) {
           ctx.moveTo(rotatedX, rotatedY);
+          first = false;
         } else {
           ctx.lineTo(rotatedX, rotatedY);
         }
