@@ -3,15 +3,23 @@ export interface WaveConfig {
   wavelength: number;
   frequency: number;
   period: number;
+  rotation?: number;
   spacing: number;
   waveCount: number;
   ampToggle: boolean;
   waveToggle: boolean;
   freqToggle: boolean;
   perToggle: boolean;
+  rotationToggle?: boolean;
   spacingToggle: boolean;
   waveCountToggle: boolean;
   baseAmplitudes: number[];
+  amplitudeVariation?: number;
+  wavelengthVariation?: number;
+  frequencyVariation?: number;
+  periodVariation?: number;
+  rotationVariation?: number;
+  spacingVariation?: number;
 }
 
 export interface Wave {
@@ -33,6 +41,7 @@ export function generateWaveId(config: WaveConfig): string {
     config.wavelength,
     config.frequency,
     config.period,
+    config.rotation ?? 0,
     config.spacing,
     config.waveCount,
     config.baseAmplitudes.slice(0, 3).join(',') // First 3 amplitudes for uniqueness

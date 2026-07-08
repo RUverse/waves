@@ -14,6 +14,7 @@
     resetWavelength as resetWavelengthValue,
     resetFrequency as resetFrequencyValue,
     resetPeriod as resetPeriodValue,
+    resetRotation as resetRotationValue,
     resetSpacing as resetSpacingValue,
     resetWaveCount as resetWaveCountValue,
     resetWaveColor as resetWaveColorValue,
@@ -29,12 +30,14 @@
     DEFAULT_WAVELENGTH,
     DEFAULT_FREQUENCY,
     DEFAULT_PERIOD,
+    DEFAULT_ROTATION,
     DEFAULT_SPACING,
     DEFAULT_WAVE_COUNT,
     DEFAULT_AMPLITUDE_VARIATION,
     DEFAULT_WAVELENGTH_VARIATION,
     DEFAULT_FREQUENCY_VARIATION,
     DEFAULT_PERIOD_VARIATION,
+    DEFAULT_ROTATION_VARIATION,
     DEFAULT_SPACING_VARIATION,
     DEFAULT_TOGGLES,
     DEFAULT_SHOW_PANEL,
@@ -46,6 +49,7 @@
     WAVELENGTH_RANGE,
     FREQUENCY_RANGE,
     PERIOD_RANGE,
+    ROTATION_RANGE,
     SPACING_RANGE,
     WAVE_COUNT_RANGE
   } from '$lib/constants';
@@ -58,6 +62,7 @@
   let wavelength = savedState?.wavelength ?? DEFAULT_WAVELENGTH;
   let frequency = savedState?.frequency ?? DEFAULT_FREQUENCY;
   let period = savedState?.period ?? DEFAULT_PERIOD;
+  let rotation = savedState?.rotation ?? DEFAULT_ROTATION;
   let spacing = savedState?.spacing ?? DEFAULT_SPACING;
   let waveCount = savedState?.waveCount ?? DEFAULT_WAVE_COUNT;
   let offset = 0;
@@ -67,6 +72,7 @@
   let wavelengthVariation = savedState?.wavelengthVariation ?? DEFAULT_WAVELENGTH_VARIATION;
   let frequencyVariation = savedState?.frequencyVariation ?? DEFAULT_FREQUENCY_VARIATION;
   let periodVariation = savedState?.periodVariation ?? DEFAULT_PERIOD_VARIATION;
+  let rotationVariation = savedState?.rotationVariation ?? DEFAULT_ROTATION_VARIATION;
   let spacingVariation = savedState?.spacingVariation ?? DEFAULT_SPACING_VARIATION;
   
   // Seed for regenerating all random variations
@@ -80,6 +86,7 @@
   let cachedWavelengthVariations: number[] = [];
   let cachedFrequencyVariations: number[] = [];
   let cachedPeriodVariations: number[] = [];
+  let cachedRotationVariations: number[] = [];
   let cachedSpacingVariations: number[] = [];
   
   // UI state
@@ -87,6 +94,7 @@
   let waveToggle = savedState?.waveToggle ?? DEFAULT_TOGGLES.wavelength;
   let freqToggle = savedState?.freqToggle ?? DEFAULT_TOGGLES.frequency;
   let perToggle = savedState?.perToggle ?? DEFAULT_TOGGLES.period;
+  let rotationToggle = savedState?.rotationToggle ?? DEFAULT_TOGGLES.rotation;
   let spacingToggle = savedState?.spacingToggle ?? DEFAULT_TOGGLES.spacing;
   let waveCountToggle = savedState?.waveCountToggle ?? DEFAULT_TOGGLES.waveCount;
   let showPanel = savedState?.showPanel ?? DEFAULT_SHOW_PANEL;
@@ -126,9 +134,10 @@
 
   // Check if current config has unsaved changes
   $: currentWaveConfigString = JSON.stringify({
-    amplitude, wavelength, frequency, period, spacing, waveCount,
-    ampToggle, waveToggle, freqToggle, perToggle, spacingToggle, waveCountToggle,
-    amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, spacingVariation
+    amplitude, wavelength, frequency, period, rotation, spacing, waveCount,
+    ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
+    baseAmplitudes,
+    amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, spacingVariation
   });
   $: hasUnsavedChanges = activeWaveId !== null && savedWaveSnapshot !== null && currentWaveConfigString !== savedWaveSnapshot;
 
@@ -139,7 +148,8 @@
       cachedWavelengthVariations = generateCachedVariations(waveCount, wavelengthVariation, WAVELENGTH_RANGE.min, WAVELENGTH_RANGE.max, variationSeed);
       cachedFrequencyVariations = generateCachedVariations(waveCount, frequencyVariation, FREQUENCY_RANGE.min, FREQUENCY_RANGE.max, variationSeed + 1000);
       cachedPeriodVariations = generateCachedVariations(waveCount, periodVariation, PERIOD_RANGE.min, PERIOD_RANGE.max, variationSeed + 2000);
-      cachedSpacingVariations = generateCachedVariations(waveCount, spacingVariation, SPACING_RANGE.min, SPACING_RANGE.max, variationSeed + 3000);
+      cachedRotationVariations = generateCachedVariations(waveCount, rotationVariation, ROTATION_RANGE.min, ROTATION_RANGE.max, variationSeed + 3000);
+      cachedSpacingVariations = generateCachedVariations(waveCount, spacingVariation, SPACING_RANGE.min, SPACING_RANGE.max, variationSeed + 4000);
     }
   }
 
@@ -150,12 +160,14 @@
       wavelength,
       frequency,
       period,
+      rotation,
       spacing,
       waveCount,
       ampToggle,
       waveToggle,
       freqToggle,
       perToggle,
+      rotationToggle,
       spacingToggle,
       waveCountToggle,
       showPanel,
@@ -165,6 +177,7 @@
       wavelengthVariation,
       frequencyVariation,
       periodVariation,
+      rotationVariation,
       spacingVariation
     };
     saveState(state);
@@ -181,15 +194,14 @@
   }
 
   function reset() {
-    if (ampToggle) variationSeed += 10000 + Math.random() * 1000;
-    if (waveToggle) wavelength = DEFAULT_WAVELENGTH + (Math.random() - 0.5) * WAVE_GENERATION.randomSeedRange;
-    if (freqToggle) frequency = DEFAULT_FREQUENCY + (Math.random() - 0.5) * 0.8;
-    if (perToggle) period = DEFAULT_PERIOD + (Math.random() - 0.5) * 0.08;
-    if (spacingToggle) spacing = DEFAULT_SPACING + (Math.random() - 0.5) * 1.0;
-    if (waveCountToggle) {
-      waveCount = Math.floor(DEFAULT_WAVE_COUNT + (Math.random() - 0.5) * 10);
-      waveCount = Math.max(1, Math.min(20, waveCount)); // Clamp between 1 and 20
-    }
+    variationSeed += 10000 + Math.random() * 1000;
+    wavelength = DEFAULT_WAVELENGTH + (Math.random() - 0.5) * WAVE_GENERATION.randomSeedRange;
+    frequency = DEFAULT_FREQUENCY + (Math.random() - 0.5) * 0.8;
+    period = DEFAULT_PERIOD + (Math.random() - 0.5) * 0.08;
+    rotation = DEFAULT_ROTATION + (Math.random() - 0.5) * 120;
+    spacing = DEFAULT_SPACING + (Math.random() - 0.5) * 1.0;
+    waveCount = Math.floor(DEFAULT_WAVE_COUNT + (Math.random() - 0.5) * 10);
+    waveCount = Math.max(1, Math.min(20, waveCount)); // Clamp between 1 and 20
   }
 
   function resetConfig() {
@@ -197,17 +209,20 @@
     wavelength = DEFAULT_WAVELENGTH;
     frequency = DEFAULT_FREQUENCY;
     period = DEFAULT_PERIOD;
+    rotation = DEFAULT_ROTATION;
     spacing = DEFAULT_SPACING;
     waveCount = DEFAULT_WAVE_COUNT;
     amplitudeVariation = DEFAULT_AMPLITUDE_VARIATION;
     wavelengthVariation = DEFAULT_WAVELENGTH_VARIATION;
     frequencyVariation = DEFAULT_FREQUENCY_VARIATION;
     periodVariation = DEFAULT_PERIOD_VARIATION;
+    rotationVariation = DEFAULT_ROTATION_VARIATION;
     spacingVariation = DEFAULT_SPACING_VARIATION;
     ampToggle = DEFAULT_TOGGLES.amplitude;
     waveToggle = DEFAULT_TOGGLES.wavelength;
     freqToggle = DEFAULT_TOGGLES.frequency;
     perToggle = DEFAULT_TOGGLES.period;
+    rotationToggle = DEFAULT_TOGGLES.rotation;
     spacingToggle = DEFAULT_TOGGLES.spacing;
     waveCountToggle = DEFAULT_TOGGLES.waveCount;
     waveColor = DEFAULT_WAVE_COLOR;
@@ -217,9 +232,10 @@
 
   // Helper to create config from current state
   const getCurrentConfig = (): WaveConfig => ({
-    amplitude, wavelength, frequency, period, spacing, waveCount,
-    ampToggle, waveToggle, freqToggle, perToggle, spacingToggle, waveCountToggle,
-    baseAmplitudes
+    amplitude, wavelength, frequency, period, rotation, spacing, waveCount,
+    ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
+    baseAmplitudes,
+    amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, spacingVariation
   });
 
   // Helper to apply config to current state
@@ -228,15 +244,23 @@
     wavelength = config.wavelength;
     frequency = config.frequency;
     period = config.period;
+    rotation = config.rotation ?? DEFAULT_ROTATION;
     spacing = config.spacing;
     waveCount = config.waveCount;
     ampToggle = config.ampToggle;
     waveToggle = config.waveToggle;
     freqToggle = config.freqToggle;
     perToggle = config.perToggle;
+    rotationToggle = config.rotationToggle ?? DEFAULT_TOGGLES.rotation;
     spacingToggle = config.spacingToggle;
     waveCountToggle = config.waveCountToggle;
     baseAmplitudes = config.baseAmplitudes;
+    amplitudeVariation = config.amplitudeVariation ?? DEFAULT_AMPLITUDE_VARIATION;
+    wavelengthVariation = config.wavelengthVariation ?? DEFAULT_WAVELENGTH_VARIATION;
+    frequencyVariation = config.frequencyVariation ?? DEFAULT_FREQUENCY_VARIATION;
+    periodVariation = config.periodVariation ?? DEFAULT_PERIOD_VARIATION;
+    rotationVariation = config.rotationVariation ?? DEFAULT_ROTATION_VARIATION;
+    spacingVariation = config.spacingVariation ?? DEFAULT_SPACING_VARIATION;
   };
 
   function openSettings() {
@@ -269,6 +293,10 @@
     periodVariation = DEFAULT_PERIOD_VARIATION;
   }
 
+  function resetRotationVariation() {
+    rotationVariation = DEFAULT_ROTATION_VARIATION;
+  }
+
   function resetSpacingVariation() {
     spacingVariation = DEFAULT_SPACING_VARIATION;
   }
@@ -282,6 +310,7 @@
       wavelength,
       frequency,
       period,
+      rotation,
       spacing,
       waveColor,
       backgroundColor,
@@ -289,6 +318,7 @@
       cachedWavelengthVariations,
       cachedFrequencyVariations,
       cachedPeriodVariations,
+      cachedRotationVariations,
       cachedSpacingVariations,
       currentCanvasWidth,
       currentCanvasHeight
@@ -317,6 +347,7 @@
       () => wavelength,
       () => frequency,
       () => period,
+      () => rotation,
       () => spacing,
       () => waveColor,
       () => backgroundColor,
@@ -325,6 +356,7 @@
       () => cachedWavelengthVariations,
       () => cachedFrequencyVariations,
       () => cachedPeriodVariations,
+      () => cachedRotationVariations,
       () => cachedSpacingVariations
     );
 
@@ -363,14 +395,9 @@
     bind:wavelength
     bind:frequency
     bind:period
+    bind:rotation
     bind:spacing
     bind:waveCount
-    bind:ampToggle
-    bind:waveToggle
-    bind:freqToggle
-    bind:perToggle
-    bind:spacingToggle
-    bind:waveCountToggle
     savedWaves={savedWaves}
     activeWaveId={activeWaveId}
     {hasUnsavedChanges}
@@ -388,6 +415,7 @@
     onResetWavelength={() => wavelength = resetWavelengthValue()}
     onResetFrequency={() => frequency = resetFrequencyValue()}
     onResetPeriod={() => period = resetPeriodValue()}
+    onResetRotation={() => rotation = resetRotationValue()}
     onResetSpacing={() => spacing = resetSpacingValue()}
     onResetWaveCount={() => waveCount = resetWaveCountValue()}
     onResetWaveColor={() => waveColor = resetWaveColorValue()}
@@ -396,11 +424,13 @@
     bind:wavelengthVariation
     bind:frequencyVariation
     bind:periodVariation
+    bind:rotationVariation
     bind:spacingVariation
     onResetAmplitudeVariation={resetAmplitudeVariation}
     onResetWavelengthVariation={resetWavelengthVariation}
     onResetFrequencyVariation={resetFrequencyVariation}
     onResetPeriodVariation={resetPeriodVariation}
+    onResetRotationVariation={resetRotationVariation}
     onResetSpacingVariation={resetSpacingVariation}
     bind:waveColor
     bind:backgroundColor

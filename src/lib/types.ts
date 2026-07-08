@@ -15,12 +15,14 @@ export interface WaveState {
   wavelength: number;
   frequency: number;
   period: number;
+  rotation: number;
   spacing: number;
   waveCount: number;
   ampToggle: boolean;
   waveToggle: boolean;
   freqToggle: boolean;
   perToggle: boolean;
+  rotationToggle: boolean;
   spacingToggle: boolean;
   waveCountToggle: boolean;
   showPanel: boolean;
@@ -30,5 +32,6 @@ export interface WaveState {
   wavelengthVariation?: number;
   frequencyVariation?: number;
   periodVariation?: number;
+  rotationVariation?: number;
   spacingVariation?: number;
 }

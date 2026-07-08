@@ -1,12 +1,12 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
-  import { Switch } from '$lib/components/ui/switch';
   import { Label } from '$lib/components/ui/label';
   import { Slider } from '$lib/components/ui/slider';
   import { ColorPicker } from '$lib/components/ui/color-picker';
   import Actions from './Actions.svelte';
   import ConfigTabs from './ConfigTabs.svelte';
   import Configurations from './Configurations.svelte';
+  import ResetIcon from './ResetIcon.svelte';
   import type { Wave } from '$lib/configStorage';
 
   // Props
@@ -20,14 +20,9 @@
   export let wavelength: number;
   export let frequency: number;
   export let period: number;
+  export let rotation: number;
   export let spacing: number;
   export let waveCount: number;
-  export let ampToggle: boolean;
-  export let waveToggle: boolean;
-  export let freqToggle: boolean;
-  export let perToggle: boolean;
-  export let spacingToggle: boolean;
-  export let waveCountToggle: boolean;
   export let onReset: () => void;
   export let onResetConfig: () => void;
   export let onSaveConfig: () => void;
@@ -40,6 +35,7 @@
   export let onResetWavelength: () => void;
   export let onResetFrequency: () => void;
   export let onResetPeriod: () => void;
+  export let onResetRotation: () => void;
   export let onResetSpacing: () => void;
   export let onResetWaveCount: () => void;
   export let onResetWaveColor: () => void;
@@ -50,11 +46,13 @@
   export let wavelengthVariation: number;
   export let frequencyVariation: number;
   export let periodVariation: number;
+  export let rotationVariation: number;
   export let spacingVariation: number;
   export let onResetAmplitudeVariation: () => void;
   export let onResetWavelengthVariation: () => void;
   export let onResetFrequencyVariation: () => void;
   export let onResetPeriodVariation: () => void;
+  export let onResetRotationVariation: () => void;
   export let onResetSpacingVariation: () => void;
 </script>
 
@@ -123,30 +121,28 @@
       bind:wavelength
       bind:frequency
       bind:period
+      bind:rotation
       bind:spacing
       bind:waveCount
-      bind:ampToggle
-      bind:waveToggle
-      bind:freqToggle
-      bind:perToggle
-      bind:spacingToggle
-      bind:waveCountToggle
       bind:amplitudeVariation
       bind:wavelengthVariation
       bind:frequencyVariation
       bind:periodVariation
+      bind:rotationVariation
       bind:spacingVariation
       {nerdMode}
       {onResetAmplitude}
       {onResetWavelength}
       {onResetFrequency}
       {onResetPeriod}
+      {onResetRotation}
       {onResetSpacing}
       {onResetWaveCount}
       {onResetAmplitudeVariation}
       {onResetWavelengthVariation}
       {onResetFrequencyVariation}
       {onResetPeriodVariation}
+      {onResetRotationVariation}
       {onResetSpacingVariation}
     />
 
@@ -164,7 +160,7 @@
           class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
           title="Reset to default"
         >
-          ↺
+          <ResetIcon />
         </Button>
       {/if}
       <div class="mx-2"></div>
@@ -180,7 +176,7 @@
           class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
           title="Reset to default"
         >
-          ↺
+          <ResetIcon />
         </Button>
       {/if}
     </div>
