@@ -3,6 +3,7 @@ export const DEFAULT_AMPLITUDE = 40;
 export const DEFAULT_WAVELENGTH = 0.02;
 export const DEFAULT_FREQUENCY = 0.5;
 export const DEFAULT_PERIOD = 0.05;
+export const DEFAULT_ROTATION = 0;
 
 // Wave parameter ranges for sliders
 export const AMPLITUDE_RANGE = {
@@ -33,6 +34,13 @@ export const PERIOD_RANGE = {
   default: DEFAULT_PERIOD
 };
 
+export const ROTATION_RANGE = {
+  min: -180,
+  max: 180,
+  step: 1,
+  default: DEFAULT_ROTATION
+};
+
 // Default spacing (1.0 = normal spacing based on window width)
 export const DEFAULT_SPACING = 1.0;
 
@@ -59,6 +67,7 @@ export const DEFAULT_TOGGLES = {
   wavelength: false,
   frequency: false,
   period: false,
+  rotation: false,
   spacing: false,
   waveCount: false
 };
@@ -88,6 +97,7 @@ export const DEFAULT_AMPLITUDE_VARIATION = 0.4;
 export const DEFAULT_WAVELENGTH_VARIATION = 0;
 export const DEFAULT_FREQUENCY_VARIATION = 0;
 export const DEFAULT_PERIOD_VARIATION = 0;
+export const DEFAULT_ROTATION_VARIATION = 0;
 export const DEFAULT_SPACING_VARIATION = 0;
 
 // Variation ranges for sliders (how much variation can be applied)
@@ -117,6 +127,13 @@ export const PERIOD_VARIATION_RANGE = {
   max: 0.2,
   step: 0.01,
   default: DEFAULT_PERIOD_VARIATION
+};
+
+export const ROTATION_VARIATION_RANGE = {
+  min: 0,
+  max: 1.0,
+  step: 0.01,
+  default: DEFAULT_ROTATION_VARIATION
 };
 
 export const SPACING_VARIATION_RANGE = {

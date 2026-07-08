@@ -6,6 +6,7 @@ import {
   DEFAULT_WAVELENGTH,
   DEFAULT_FREQUENCY,
   DEFAULT_PERIOD,
+  DEFAULT_ROTATION,
   DEFAULT_SPACING,
   DEFAULT_WAVE_COLOR,
   DEFAULT_BACKGROUND_COLOR,
@@ -82,6 +83,10 @@ export function resetPeriod(): number {
   return DEFAULT_PERIOD;
 }
 
+export function resetRotation(): number {
+  return DEFAULT_ROTATION;
+}
+
 export function resetSpacing(): number {
   return DEFAULT_SPACING;
 }
@@ -148,6 +153,7 @@ export function createWaveSketch(
   getWavelength: () => number,
   getFrequency: () => number,
   getPeriod: () => number,
+  getRotation: () => number,
   getSpacing: () => number,
   getWaveColor: () => string,
   getBackgroundColor: () => string,
@@ -156,6 +162,7 @@ export function createWaveSketch(
   getCachedWavelengthVariations: () => number[] = () => [],
   getCachedFrequencyVariations: () => number[] = () => [],
   getCachedPeriodVariations: () => number[] = () => [],
+  getCachedRotationVariations: () => number[] = () => [],
   getCachedSpacingVariations: () => number[] = () => []
 ) {
   return (p: p5) => {
@@ -173,12 +180,14 @@ export function createWaveSketch(
       const baseWavelength = getWavelength();
       const baseFrequency = getFrequency();
       const basePeriod = getPeriod();
+      const baseRotation = getRotation();
       const baseSpacing = getSpacing();
       const offset = getOffset();
       
       const cachedWavelengthVariations = getCachedWavelengthVariations();
       const cachedFrequencyVariations = getCachedFrequencyVariations();
       const cachedPeriodVariations = getCachedPeriodVariations();
+      const cachedRotationVariations = getCachedRotationVariations();
       const cachedSpacingVariations = getCachedSpacingVariations();
 
       p.background(backgroundColor);
@@ -195,13 +204,23 @@ export function createWaveSketch(
         const waveWavelength = baseWavelength + (cachedWavelengthVariations[i] ?? 0);
         const waveFrequency = baseFrequency + (cachedFrequencyVariations[i] ?? 0);
         const wavePeriod = basePeriod + (cachedPeriodVariations[i] ?? 0);
+        const waveRotation = baseRotation + (cachedRotationVariations[i] ?? 0);
+        const rotationRadians = waveRotation * Math.PI / 180;
+        const rotationCos = Math.cos(rotationRadians);
+        const rotationSin = Math.sin(rotationRadians);
         
         let x = startOffset + adjustedSpacing * (i + 1);
+        const centerX = p.width / 2;
+        const centerY = p.height / 2;
 
         p.beginShape();
         for (let y = 0; y <= p.height; y += CANVAS_SETTINGS.vertexStep) {
           let waveX = x + p.sin(y * waveWavelength + offset + waveFrequency) * amplitudes[i];
-          p.vertex(waveX, y);
+          const dx = waveX - centerX;
+          const dy = y - centerY;
+          const rotatedX = centerX + dx * rotationCos - dy * rotationSin;
+          const rotatedY = centerY + dx * rotationSin + dy * rotationCos;
+          p.vertex(rotatedX, rotatedY);
         }
         p.endShape();
       }
@@ -229,6 +248,7 @@ export function renderWaveToCanvas(
   wavelength: number,
   frequency: number,
   period: number,
+  rotation: number,
   spacing: number,
   waveColor: string,
   backgroundColor: string,
@@ -236,6 +256,7 @@ export function renderWaveToCanvas(
   cachedWavelengthVariations: number[],
   cachedFrequencyVariations: number[],
   cachedPeriodVariations: number[],
+  cachedRotationVariations: number[],
   cachedSpacingVariations: number[],
   originalCanvasWidth: number = width,
   originalCanvasHeight: number = height
@@ -283,18 +304,28 @@ export function renderWaveToCanvas(
       const waveWavelength = wavelength + (cachedWavelengthVariations[i] ?? 0);
       const waveFrequency = frequency + (cachedFrequencyVariations[i] ?? 0);
       const wavePeriod = period + (cachedPeriodVariations[i] ?? 0);
+      const waveRotation = rotation + (cachedRotationVariations[i] ?? 0);
+      const rotationRadians = waveRotation * Math.PI / 180;
+      const rotationCos = Math.cos(rotationRadians);
+      const rotationSin = Math.sin(rotationRadians);
 
       let x = scaledStartOffset + scaledAdjustedSpacing * (i + 1);
+      const centerX = width / 2;
+      const centerY = height / 2;
 
       ctx.beginPath();
       for (let y = 0; y <= height; y += scaledVertexStep) {
         // Scale amplitude based on the scale ratio
         const scaledAmplitude = amplitudes[i] * scaleX;
         const waveX = x + Math.sin(y * waveWavelength + offset + waveFrequency) * scaledAmplitude;
+        const dx = waveX - centerX;
+        const dy = y - centerY;
+        const rotatedX = centerX + dx * rotationCos - dy * rotationSin;
+        const rotatedY = centerY + dx * rotationSin + dy * rotationCos;
         if (y === 0) {
-          ctx.moveTo(waveX, y);
+          ctx.moveTo(rotatedX, rotatedY);
         } else {
-          ctx.lineTo(waveX, y);
+          ctx.lineTo(rotatedX, rotatedY);
         }
       }
       ctx.stroke();
