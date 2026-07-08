@@ -2,6 +2,38 @@
 
 A beautiful, interactive wave generation and visualization tool built with Svelte and TypeScript. Waves is a wave visualization app that lets you create and customize animated wave patterns. Control multiple parameters like amplitude, wavelength, frequency, period, spacing, and wave count to generate unique, mesmerizing wave animations. Save and your favorite configurations and switch between them instantly.
 
+## Run Locally
+
+Prerequisites:
+
+- Bun 1.3 or newer
+
+Install dependencies:
+
+```sh
+bun install --frozen-lockfile
+```
+
+Start the development server:
+
+```sh
+bun run dev
+```
+
+Vite will print a local URL, usually `http://localhost:5173/`, where you can open the app in your browser.
+
+To create a production build:
+
+```sh
+bun run build
+```
+
+To preview the production build locally:
+
+```sh
+bun run preview
+```
+
 
 ## Recommended IDE Setup
 
