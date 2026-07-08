@@ -17,6 +17,7 @@ export interface WaveState {
   period: number;
   rotation: number;
   spacing: number;
+  thickness: number;
   waveCount: number;
   ampToggle: boolean;
   waveToggle: boolean;
@@ -34,4 +35,5 @@ export interface WaveState {
   periodVariation?: number;
   rotationVariation?: number;
   spacingVariation?: number;
+  thicknessVariation?: number;
 }

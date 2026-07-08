@@ -61,6 +61,16 @@ export const WAVE_COUNT_RANGE = {
   default: DEFAULT_WAVE_COUNT
 };
 
+// Default wave thickness
+export const DEFAULT_THICKNESS = 2;
+
+export const THICKNESS_RANGE = {
+  min: 1,
+  max: 20,
+  step: 0.5,
+  default: DEFAULT_THICKNESS
+};
+
 // UI defaults
 export const DEFAULT_TOGGLES = {
   amplitude: true,
@@ -82,7 +92,7 @@ export const DEFAULT_BACKGROUND_COLOR = '#000000';
 export const CANVAS_SETTINGS = {
   backgroundColor: 0,
   strokeColor: 255,
-  strokeWeight: 2,
+  strokeWeight: DEFAULT_THICKNESS,
   vertexStep: 5
 };
 
@@ -99,6 +109,7 @@ export const DEFAULT_FREQUENCY_VARIATION = 0;
 export const DEFAULT_PERIOD_VARIATION = 0;
 export const DEFAULT_ROTATION_VARIATION = 0;
 export const DEFAULT_SPACING_VARIATION = 0;
+export const DEFAULT_THICKNESS_VARIATION = 0;
 
 // Variation ranges for sliders (how much variation can be applied)
 export const AMPLITUDE_VARIATION_RANGE = {
@@ -141,4 +152,11 @@ export const SPACING_VARIATION_RANGE = {
   max: 2.0,
   step: 0.1,
   default: DEFAULT_SPACING_VARIATION
+};
+
+export const THICKNESS_VARIATION_RANGE = {
+  min: 0,
+  max: 1.0,
+  step: 0.01,
+  default: DEFAULT_THICKNESS_VARIATION
 };

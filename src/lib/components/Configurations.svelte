@@ -10,13 +10,15 @@
     PERIOD_RANGE,
     ROTATION_RANGE,
     SPACING_RANGE,
+    THICKNESS_RANGE,
     WAVE_COUNT_RANGE,
     AMPLITUDE_VARIATION_RANGE,
     WAVELENGTH_VARIATION_RANGE,
     FREQUENCY_VARIATION_RANGE,
     PERIOD_VARIATION_RANGE,
     ROTATION_VARIATION_RANGE,
-    SPACING_VARIATION_RANGE
+    SPACING_VARIATION_RANGE,
+    THICKNESS_VARIATION_RANGE
   } from '$lib/constants';
 
   export let amplitude: number;
@@ -25,6 +27,7 @@
   export let period: number;
   export let rotation: number;
   export let spacing: number;
+  export let thickness: number;
   export let waveCount: number;
   export let nerdMode: boolean;
   export let onResetAmplitude: () => void;
@@ -33,6 +36,7 @@
   export let onResetPeriod: () => void;
   export let onResetRotation: () => void;
   export let onResetSpacing: () => void;
+  export let onResetThickness: () => void;
   export let onResetWaveCount: () => void;
   export let amplitudeVariation: number;
   export let wavelengthVariation: number;
@@ -40,12 +44,14 @@
   export let periodVariation: number;
   export let rotationVariation: number;
   export let spacingVariation: number;
+  export let thicknessVariation: number;
   export let onResetAmplitudeVariation: () => void;
   export let onResetWavelengthVariation: () => void;
   export let onResetFrequencyVariation: () => void;
   export let onResetPeriodVariation: () => void;
   export let onResetRotationVariation: () => void;
   export let onResetSpacingVariation: () => void;
+  export let onResetThicknessVariation: () => void;
 </script>
 
 <div class="flex flex-col gap-3">
@@ -251,27 +257,27 @@
         <span class="text-white text-xs w-12 text-right">{rotation.toFixed(0)}°</span>
       {/if}
     </div>
-    <div class="flex items-center space-x-2 ml-8 mt-1">
-      <Label class="text-white text-xs w-12">Var:</Label>
-      <Slider 
-        bind:value={rotationVariation} 
-        min={ROTATION_VARIATION_RANGE.min} 
-        max={ROTATION_VARIATION_RANGE.max} 
-        step={ROTATION_VARIATION_RANGE.step}
-        class="w-32"
-      />
-      <Button 
-        onclick={onResetRotationVariation}
-        variant="ghost"
-        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
-        title="Reset rotation variance"
-      >
-        <ResetIcon />
-      </Button>
-      {#if nerdMode}
+    {#if nerdMode}
+      <div class="flex items-center space-x-2 ml-8 mt-1">
+        <Label class="text-white text-xs w-12">Var:</Label>
+        <Slider 
+          bind:value={rotationVariation} 
+          min={ROTATION_VARIATION_RANGE.min} 
+          max={ROTATION_VARIATION_RANGE.max} 
+          step={ROTATION_VARIATION_RANGE.step}
+          class="w-32"
+        />
         <span class="text-white text-xs w-12 text-right">{rotationVariation.toFixed(2)}</span>
-      {/if}
-    </div>
+        <Button 
+          onclick={onResetRotationVariation}
+          variant="ghost"
+          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
+          title="Reset to default"
+        >
+          <ResetIcon />
+        </Button>
+      </div>
+    {/if}
   </div>
   
   <div>
@@ -309,6 +315,51 @@
         <span class="text-white text-xs w-12 text-right">{spacingVariation.toFixed(2)}</span>
         <Button 
           onclick={onResetSpacingVariation}
+          variant="ghost"
+          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
+          title="Reset to default"
+        >
+          <ResetIcon />
+        </Button>
+      </div>
+    {/if}
+  </div>
+  
+  <div>
+    <div class="flex items-center space-x-2">
+      <Button 
+        onclick={onResetThickness}
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
+        title="Reset thickness"
+      >
+        <ResetIcon />
+      </Button>
+      <Label class="text-white w-24">Thickness</Label>
+      <Slider 
+        bind:value={thickness} 
+        min={THICKNESS_RANGE.min} 
+        max={THICKNESS_RANGE.max} 
+        step={THICKNESS_RANGE.step}
+        class="w-32"
+      />
+      {#if nerdMode}
+        <span class="text-white text-xs w-12 text-right">{thickness.toFixed(1)}</span>
+      {/if}
+    </div>
+    {#if nerdMode}
+      <div class="flex items-center space-x-2 ml-8 mt-1">
+        <Label class="text-white text-xs w-12">Var:</Label>
+        <Slider 
+          bind:value={thicknessVariation} 
+          min={THICKNESS_VARIATION_RANGE.min} 
+          max={THICKNESS_VARIATION_RANGE.max} 
+          step={THICKNESS_VARIATION_RANGE.step}
+          class="w-32"
+        />
+        <span class="text-white text-xs w-12 text-right">{thicknessVariation.toFixed(2)}</span>
+        <Button 
+          onclick={onResetThicknessVariation}
           variant="ghost"
           class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
           title="Reset to default"

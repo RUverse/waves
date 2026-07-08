@@ -24,6 +24,7 @@
   export let period: number;
   export let rotation: number;
   export let spacing: number;
+  export let thickness: number;
   export let waveCount: number;
   export let onReset: () => void;
   export let onResetConfig: () => void;
@@ -39,6 +40,7 @@
   export let onResetPeriod: () => void;
   export let onResetRotation: () => void;
   export let onResetSpacing: () => void;
+  export let onResetThickness: () => void;
   export let onResetWaveCount: () => void;
   export let onResetWaveColor: () => void;
   export let onResetBackgroundColor: () => void;
@@ -50,12 +52,14 @@
   export let periodVariation: number;
   export let rotationVariation: number;
   export let spacingVariation: number;
+  export let thicknessVariation: number;
   export let onResetAmplitudeVariation: () => void;
   export let onResetWavelengthVariation: () => void;
   export let onResetFrequencyVariation: () => void;
   export let onResetPeriodVariation: () => void;
   export let onResetRotationVariation: () => void;
   export let onResetSpacingVariation: () => void;
+  export let onResetThicknessVariation: () => void;
 </script>
 
 <!-- Control Panel with Config Tabs -->
@@ -130,6 +134,7 @@
       bind:period
       bind:rotation
       bind:spacing
+      bind:thickness
       bind:waveCount
       bind:amplitudeVariation
       bind:wavelengthVariation
@@ -137,6 +142,7 @@
       bind:periodVariation
       bind:rotationVariation
       bind:spacingVariation
+      bind:thicknessVariation
       {nerdMode}
       {onResetAmplitude}
       {onResetWavelength}
@@ -144,6 +150,7 @@
       {onResetPeriod}
       {onResetRotation}
       {onResetSpacing}
+      {onResetThickness}
       {onResetWaveCount}
       {onResetAmplitudeVariation}
       {onResetWavelengthVariation}
@@ -151,6 +158,7 @@
       {onResetPeriodVariation}
       {onResetRotationVariation}
       {onResetSpacingVariation}
+      {onResetThicknessVariation}
     />
 
     <!-- Color Pickers -->

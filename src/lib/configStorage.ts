@@ -1,3 +1,5 @@
+import { DEFAULT_THICKNESS, DEFAULT_THICKNESS_VARIATION } from './constants';
+
 export interface WaveConfig {
   amplitude: number;
   wavelength: number;
@@ -5,6 +7,7 @@ export interface WaveConfig {
   period: number;
   rotation?: number;
   spacing: number;
+  thickness?: number;
   waveCount: number;
   ampToggle: boolean;
   waveToggle: boolean;
@@ -20,6 +23,7 @@ export interface WaveConfig {
   periodVariation?: number;
   rotationVariation?: number;
   spacingVariation?: number;
+  thicknessVariation?: number;
 }
 
 export interface Wave {
@@ -43,6 +47,8 @@ export function generateWaveId(config: WaveConfig): string {
     config.period,
     config.rotation ?? 0,
     config.spacing,
+    config.thickness ?? DEFAULT_THICKNESS,
+    config.thicknessVariation ?? DEFAULT_THICKNESS_VARIATION,
     config.waveCount,
     config.baseAmplitudes.slice(0, 3).join(',') // First 3 amplitudes for uniqueness
   ].join('|');
