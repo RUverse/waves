@@ -9,12 +9,22 @@ import {
   DEFAULT_ROTATION,
   DEFAULT_SPACING,
   DEFAULT_THICKNESS,
+  DEFAULT_TAPER,
   DEFAULT_WAVE_COLOR,
   DEFAULT_BACKGROUND_COLOR,
   WAVE_GENERATION,
   CANVAS_SETTINGS,
+  TAPER_RANGE,
   THICKNESS_RANGE
 } from './constants';
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+const TAPER_PROFILE_CYCLES = 2;
+const MIN_TAPER_MULTIPLIER = 0.15;
 
 /**
  * Applies random variation to a value based on variation strength
@@ -97,6 +107,10 @@ export function resetThickness(): number {
   return DEFAULT_THICKNESS;
 }
 
+export function resetTaper(): number {
+  return DEFAULT_TAPER;
+}
+
 export function resetWaveCount(): number {
   return DEFAULT_WAVE_COUNT;
 }
@@ -154,6 +168,198 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+function rotatePoint(
+  x: number,
+  y: number,
+  centerX: number,
+  centerY: number,
+  rotationCos: number,
+  rotationSin: number
+): Point {
+  const dx = x - centerX;
+  const dy = y - centerY;
+  return {
+    x: centerX + dx * rotationCos - dy * rotationSin,
+    y: centerY + dx * rotationSin + dy * rotationCos
+  };
+}
+
+function getTaperAmount(taper: number): number {
+  return clamp(taper, TAPER_RANGE.min, TAPER_RANGE.max);
+}
+
+function getTaperMultiplier(t: number, taper: number, phase: number): number {
+  const amount = getTaperAmount(taper);
+  if (amount <= 0) return 1;
+
+  const profile = Math.sin(t * Math.PI * 2 * TAPER_PROFILE_CYCLES + phase);
+  return Math.max(MIN_TAPER_MULTIPLIER, 1 + amount * profile);
+}
+
+function getMaxTaperMultiplier(taper: number): number {
+  return 1 + getTaperAmount(taper);
+}
+
+function createVariableWidthWavePoints(
+  x: number,
+  yStart: number,
+  yEnd: number,
+  vertexStep: number,
+  amplitude: number,
+  wavelength: number,
+  offset: number,
+  frequency: number,
+  thickness: number,
+  taper: number,
+  phase: number,
+  centerX: number,
+  centerY: number,
+  rotationCos: number,
+  rotationSin: number
+): { left: Point[]; right: Point[] } {
+  const left: Point[] = [];
+  const right: Point[] = [];
+  const span = yEnd - yStart || 1;
+  let lastY = yStart;
+
+  const addPoint = (y: number) => {
+    const angle = y * wavelength + offset + frequency;
+    const waveX = x + Math.sin(angle) * amplitude;
+    const dxDy = Math.cos(angle) * amplitude * wavelength;
+    const normalLength = Math.hypot(1, dxDy);
+    const normalX = 1 / normalLength;
+    const normalY = -dxDy / normalLength;
+    const t = clamp((y - yStart) / span, 0, 1);
+    const localThickness = thickness * getTaperMultiplier(t, taper, phase);
+    const halfThickness = Math.max(localThickness / 2, 0.05);
+
+    left.push(rotatePoint(
+      waveX + normalX * halfThickness,
+      y + normalY * halfThickness,
+      centerX,
+      centerY,
+      rotationCos,
+      rotationSin
+    ));
+    right.push(rotatePoint(
+      waveX - normalX * halfThickness,
+      y - normalY * halfThickness,
+      centerX,
+      centerY,
+      rotationCos,
+      rotationSin
+    ));
+    lastY = y;
+  };
+
+  for (let y = yStart; y <= yEnd; y += vertexStep) {
+    addPoint(y);
+  }
+
+  if (lastY < yEnd) {
+    addPoint(yEnd);
+  }
+
+  return { left, right };
+}
+
+function drawVariableWidthWaveP5(
+  p: p5,
+  x: number,
+  yStart: number,
+  yEnd: number,
+  vertexStep: number,
+  amplitude: number,
+  wavelength: number,
+  offset: number,
+  frequency: number,
+  thickness: number,
+  taper: number,
+  phase: number,
+  centerX: number,
+  centerY: number,
+  rotationCos: number,
+  rotationSin: number
+): void {
+  const { left, right } = createVariableWidthWavePoints(
+    x,
+    yStart,
+    yEnd,
+    vertexStep,
+    amplitude,
+    wavelength,
+    offset,
+    frequency,
+    thickness,
+    taper,
+    phase,
+    centerX,
+    centerY,
+    rotationCos,
+    rotationSin
+  );
+
+  p.beginShape();
+  for (const point of left) {
+    p.vertex(point.x, point.y);
+  }
+  for (let i = right.length - 1; i >= 0; i--) {
+    const point = right[i];
+    p.vertex(point.x, point.y);
+  }
+  p.endShape(p.CLOSE);
+}
+
+function drawVariableWidthWaveCanvas(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  yStart: number,
+  yEnd: number,
+  vertexStep: number,
+  amplitude: number,
+  wavelength: number,
+  offset: number,
+  frequency: number,
+  thickness: number,
+  taper: number,
+  phase: number,
+  centerX: number,
+  centerY: number,
+  rotationCos: number,
+  rotationSin: number
+): void {
+  const { left, right } = createVariableWidthWavePoints(
+    x,
+    yStart,
+    yEnd,
+    vertexStep,
+    amplitude,
+    wavelength,
+    offset,
+    frequency,
+    thickness,
+    taper,
+    phase,
+    centerX,
+    centerY,
+    rotationCos,
+    rotationSin
+  );
+
+  if (left.length === 0 || right.length === 0) return;
+
+  ctx.beginPath();
+  ctx.moveTo(left[0].x, left[0].y);
+  for (let i = 1; i < left.length; i++) {
+    ctx.lineTo(left[i].x, left[i].y);
+  }
+  for (let i = right.length - 1; i >= 0; i--) {
+    ctx.lineTo(right[i].x, right[i].y);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
 /**
  * Creates a p5 sketch function for rendering waves
  */
@@ -166,6 +372,7 @@ export function createWaveSketch(
   getRotation: () => number,
   getSpacing: () => number,
   getThickness: () => number,
+  getTaper: () => number,
   getWaveColor: () => string,
   getBackgroundColor: () => string,
   getOffset: () => number,
@@ -195,6 +402,7 @@ export function createWaveSketch(
       const baseRotation = getRotation();
       const baseSpacing = getSpacing();
       const baseThickness = getThickness();
+      const taper = getTaperAmount(getTaper());
       const offset = getOffset();
       
       const cachedWavelengthVariations = getCachedWavelengthVariations();
@@ -204,7 +412,13 @@ export function createWaveSketch(
       const cachedThicknessVariations = getCachedThicknessVariations();
 
       p.background(backgroundColor);
-      p.stroke(waveColor);
+      if (taper > 0) {
+        p.noStroke();
+        p.fill(waveColor);
+      } else {
+        p.noFill();
+        p.stroke(waveColor);
+      }
 
       // Calculate base spacing and apply spacing multiplier
       const baseSp = p.width / (waveCount + 1);
@@ -232,7 +446,7 @@ export function createWaveSketch(
                 baseThickness + (cachedThicknessVariations[idx] ?? 0),
                 THICKNESS_RANGE.min,
                 THICKNESS_RANGE.max
-              )
+              ) * getMaxTaperMultiplier(taper)
             )
           )
         : THICKNESS_RANGE.min;
@@ -269,17 +483,35 @@ export function createWaveSketch(
 
         const x = startOffset + adjustedSpacing * (i + 1);
 
-        p.strokeWeight(waveThickness);
-        p.beginShape();
-        for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += CANVAS_SETTINGS.vertexStep) {
-          const waveX = x + p.sin(y * waveWavelength + offset + waveFrequency) * amplitude;
-          const dx = waveX - centerX;
-          const dy = y - centerY;
-          const rotatedX = centerX + dx * rotationCos - dy * rotationSin;
-          const rotatedY = centerY + dx * rotationSin + dy * rotationCos;
-          p.vertex(rotatedX, rotatedY);
+        if (taper > 0) {
+          drawVariableWidthWaveP5(
+            p,
+            x,
+            centerY - coverRadius,
+            centerY + coverRadius,
+            CANVAS_SETTINGS.vertexStep,
+            amplitude,
+            waveWavelength,
+            offset,
+            waveFrequency,
+            waveThickness,
+            taper,
+            idx * 0.85,
+            centerX,
+            centerY,
+            rotationCos,
+            rotationSin
+          );
+        } else {
+          p.strokeWeight(waveThickness);
+          p.beginShape();
+          for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += CANVAS_SETTINGS.vertexStep) {
+            const waveX = x + p.sin(y * waveWavelength + offset + waveFrequency) * amplitude;
+            const rotatedPoint = rotatePoint(waveX, y, centerX, centerY, rotationCos, rotationSin);
+            p.vertex(rotatedPoint.x, rotatedPoint.y);
+          }
+          p.endShape();
         }
-        p.endShape();
       }
 
       setOffset(offset + basePeriod);
@@ -308,6 +540,7 @@ export function renderWaveToCanvas(
   rotation: number,
   spacing: number,
   thickness: number,
+  taper: number,
   waveColor: string,
   backgroundColor: string,
   offset: number,
@@ -333,8 +566,9 @@ export function renderWaveToCanvas(
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Set stroke style for waves
+    // Set drawing style for waves
     ctx.strokeStyle = waveColor;
+    ctx.fillStyle = waveColor;
     
     // Calculate the scale ratio to maintain consistent spacing and appearance
     const scaleX = width / originalCanvasWidth;
@@ -367,6 +601,7 @@ export function renderWaveToCanvas(
       (max, a) => Math.max(max, Math.abs((a ?? 0) * scaleX)),
       0
     );
+    const taperAmount = getTaperAmount(taper);
     const maxScaledThickness = waveCount > 0
       ? Math.max(
           ...Array.from({ length: waveCount }, (_, idx) =>
@@ -374,7 +609,7 @@ export function renderWaveToCanvas(
               thickness + (cachedThicknessVariations[idx] ?? 0),
               THICKNESS_RANGE.min,
               THICKNESS_RANGE.max
-            ) * avgScale
+            ) * avgScale * getMaxTaperMultiplier(taperAmount)
           )
         )
       : THICKNESS_RANGE.min * avgScale;
@@ -407,23 +642,41 @@ export function renderWaveToCanvas(
 
       const x = scaledStartOffset + scaledAdjustedSpacing * (i + 1);
 
-      ctx.lineWidth = waveThickness;
-      ctx.beginPath();
-      let first = true;
-      for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += scaledVertexStep) {
-        const waveX = x + Math.sin(y * waveWavelength + offset + waveFrequency) * scaledAmplitude;
-        const dx = waveX - centerX;
-        const dy = y - centerY;
-        const rotatedX = centerX + dx * rotationCos - dy * rotationSin;
-        const rotatedY = centerY + dx * rotationSin + dy * rotationCos;
-        if (first) {
-          ctx.moveTo(rotatedX, rotatedY);
-          first = false;
-        } else {
-          ctx.lineTo(rotatedX, rotatedY);
+      if (taperAmount > 0) {
+        drawVariableWidthWaveCanvas(
+          ctx,
+          x,
+          centerY - coverRadius,
+          centerY + coverRadius,
+          scaledVertexStep,
+          scaledAmplitude,
+          waveWavelength,
+          offset,
+          waveFrequency,
+          waveThickness,
+          taperAmount,
+          idx * 0.85,
+          centerX,
+          centerY,
+          rotationCos,
+          rotationSin
+        );
+      } else {
+        ctx.lineWidth = waveThickness;
+        ctx.beginPath();
+        let first = true;
+        for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += scaledVertexStep) {
+          const waveX = x + Math.sin(y * waveWavelength + offset + waveFrequency) * scaledAmplitude;
+          const rotatedPoint = rotatePoint(waveX, y, centerX, centerY, rotationCos, rotationSin);
+          if (first) {
+            ctx.moveTo(rotatedPoint.x, rotatedPoint.y);
+            first = false;
+          } else {
+            ctx.lineTo(rotatedPoint.x, rotatedPoint.y);
+          }
         }
+        ctx.stroke();
       }
-      ctx.stroke();
     }
 
     return canvas;

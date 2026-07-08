@@ -1,4 +1,4 @@
-import { DEFAULT_THICKNESS, DEFAULT_THICKNESS_VARIATION } from './constants';
+import { DEFAULT_TAPER, DEFAULT_THICKNESS, DEFAULT_THICKNESS_VARIATION } from './constants';
 
 export interface WaveConfig {
   amplitude: number;
@@ -8,6 +8,7 @@ export interface WaveConfig {
   rotation?: number;
   spacing: number;
   thickness?: number;
+  taper?: number;
   waveCount: number;
   ampToggle: boolean;
   waveToggle: boolean;
@@ -48,6 +49,7 @@ export function generateWaveId(config: WaveConfig): string {
     config.rotation ?? 0,
     config.spacing,
     config.thickness ?? DEFAULT_THICKNESS,
+    config.taper ?? DEFAULT_TAPER,
     config.thicknessVariation ?? DEFAULT_THICKNESS_VARIATION,
     config.waveCount,
     config.baseAmplitudes.slice(0, 3).join(',') // First 3 amplitudes for uniqueness

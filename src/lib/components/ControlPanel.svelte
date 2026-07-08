@@ -25,6 +25,7 @@
   export let rotation: number;
   export let spacing: number;
   export let thickness: number;
+  export let taper: number;
   export let waveCount: number;
   export let onReset: () => void;
   export let onResetConfig: () => void;
@@ -34,6 +35,7 @@
   export let onOpenSettings: () => void;
   export let onOpenExport: () => void;
   export let nerdMode: boolean;
+  export let onToggleNerdMode: (value: boolean) => void;
   export let onResetAmplitude: () => void;
   export let onResetWavelength: () => void;
   export let onResetFrequency: () => void;
@@ -41,6 +43,7 @@
   export let onResetRotation: () => void;
   export let onResetSpacing: () => void;
   export let onResetThickness: () => void;
+  export let onResetTaper: () => void;
   export let onResetWaveCount: () => void;
   export let onResetWaveColor: () => void;
   export let onResetBackgroundColor: () => void;
@@ -84,7 +87,7 @@
   <!-- Control Panel -->
   {#if showPanel}
     <div
-      class="control-panel glass-surface flex flex-col rounded-2xl p-3 m-0 gap-3"
+      class="control-panel glass-surface flex flex-col rounded-2xl p-3 m-0 gap-3 max-w-[calc(100vw-0.5rem)] max-h-[calc(100dvh-0.5rem)] overflow-y-auto overflow-x-hidden"
       transition:fly={{ x: -24, duration: 260, easing: cubicOut }}
     >
       <!-- Header -->
@@ -93,21 +96,21 @@
       <!-- Main Layout: Actions (Left) and Content (Right) -->
       <div class="flex flex-row gap-2">
         <!-- Left Sidebar - Actions Buttons (Vertical) -->
-        <div class="flex flex-col justify-between gap-2 w-32 shrink-0">
-          <Actions {onReset} {onResetConfig} {onSaveConfig} {onSaveConfigAsNew} {onOpenSettings} {onOpenExport} {activeWaveId} />
+        <div class="flex flex-col justify-between gap-2 w-11 sm:w-32 shrink-0">
+          <Actions {onReset} {onResetConfig} {onSaveConfig} {onSaveConfigAsNew} {onOpenSettings} {onOpenExport} {activeWaveId} {nerdMode} {onToggleNerdMode} />
           
           <!-- Collapse Button (at bottom) -->
           <Button
             onclick={onTogglePanel}
             variant="ghost"
-            class="glass-btn flex items-center justify-start gap-2.5 w-full h-10 px-3 rounded-lg text-sm font-medium"
+            class="glass-btn flex items-center justify-center sm:justify-start gap-2.5 w-full h-10 px-0 sm:px-3 rounded-lg text-sm font-medium"
             title="Collapse panel"
           >
             <!-- Chevron Left Icon -->
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <polyline points="13,5 8,10 13,15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </svg>
-            <span>Collapse</span>
+            <span class="hidden sm:inline">Collapse</span>
           </Button>
         </div>
 
@@ -135,6 +138,7 @@
       bind:rotation
       bind:spacing
       bind:thickness
+      bind:taper
       bind:waveCount
       bind:amplitudeVariation
       bind:wavelengthVariation
@@ -151,6 +155,7 @@
       {onResetRotation}
       {onResetSpacing}
       {onResetThickness}
+      {onResetTaper}
       {onResetWaveCount}
       {onResetAmplitudeVariation}
       {onResetWavelengthVariation}

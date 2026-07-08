@@ -17,6 +17,7 @@
     resetRotation as resetRotationValue,
     resetSpacing as resetSpacingValue,
     resetThickness as resetThicknessValue,
+    resetTaper as resetTaperValue,
     resetWaveCount as resetWaveCountValue,
     resetWaveColor as resetWaveColorValue,
     resetBackgroundColor as resetBackgroundColorValue
@@ -34,6 +35,7 @@
     DEFAULT_ROTATION,
     DEFAULT_SPACING,
     DEFAULT_THICKNESS,
+    DEFAULT_TAPER,
     DEFAULT_WAVE_COUNT,
     DEFAULT_AMPLITUDE_VARIATION,
     DEFAULT_WAVELENGTH_VARIATION,
@@ -55,6 +57,7 @@
     ROTATION_RANGE,
     SPACING_RANGE,
     THICKNESS_RANGE,
+    TAPER_RANGE,
     WAVE_COUNT_RANGE
   } from '$lib/constants';
 
@@ -69,6 +72,7 @@
   let rotation = savedState?.rotation ?? DEFAULT_ROTATION;
   let spacing = savedState?.spacing ?? DEFAULT_SPACING;
   let thickness = savedState?.thickness ?? DEFAULT_THICKNESS;
+  let taper = savedState?.taper ?? DEFAULT_TAPER;
   let waveCount = savedState?.waveCount ?? DEFAULT_WAVE_COUNT;
   let offset = 0;
   
@@ -141,7 +145,7 @@
 
   // Check if current config has unsaved changes
   $: currentWaveConfigString = JSON.stringify({
-    amplitude, wavelength, frequency, period, rotation, spacing, thickness, waveCount,
+    amplitude, wavelength, frequency, period, rotation, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
     baseAmplitudes,
     amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, spacingVariation, thicknessVariation
@@ -171,6 +175,7 @@
       rotation,
       spacing,
       thickness,
+      taper,
       waveCount,
       ampToggle,
       waveToggle,
@@ -208,6 +213,7 @@
       THICKNESS_RANGE.min,
       Math.min(THICKNESS_RANGE.max, DEFAULT_THICKNESS + (Math.random() - 0.5) * 4)
     );
+    taper = Math.random() * TAPER_RANGE.max;
     waveCount = Math.floor(DEFAULT_WAVE_COUNT + (Math.random() - 0.5) * 10);
     waveCount = Math.max(1, Math.min(20, waveCount)); // Clamp between 1 and 20
   }
@@ -220,6 +226,7 @@
     rotation = DEFAULT_ROTATION;
     spacing = DEFAULT_SPACING;
     thickness = DEFAULT_THICKNESS;
+    taper = DEFAULT_TAPER;
     waveCount = DEFAULT_WAVE_COUNT;
     amplitudeVariation = DEFAULT_AMPLITUDE_VARIATION;
     wavelengthVariation = DEFAULT_WAVELENGTH_VARIATION;
@@ -242,7 +249,7 @@
 
   // Helper to create config from current state
   const getCurrentConfig = (): WaveConfig => ({
-    amplitude, wavelength, frequency, period, rotation, spacing, thickness, waveCount,
+    amplitude, wavelength, frequency, period, rotation, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
     baseAmplitudes,
     amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, spacingVariation, thicknessVariation
@@ -257,6 +264,7 @@
     rotation = config.rotation ?? DEFAULT_ROTATION;
     spacing = config.spacing;
     thickness = config.thickness ?? DEFAULT_THICKNESS;
+    taper = config.taper ?? DEFAULT_TAPER;
     waveCount = config.waveCount;
     ampToggle = config.ampToggle;
     waveToggle = config.waveToggle;
@@ -329,6 +337,7 @@
       rotation,
       spacing,
       thickness,
+      taper,
       waveColor,
       backgroundColor,
       offset,
@@ -368,6 +377,7 @@
       () => rotation,
       () => spacing,
       () => thickness,
+      () => taper,
       () => waveColor,
       () => backgroundColor,
       () => offset,
@@ -418,6 +428,7 @@
     bind:rotation
     bind:spacing
     bind:thickness
+    bind:taper
     bind:waveCount
     savedWaves={savedWaves}
     activeWaveId={activeWaveId}
@@ -432,6 +443,7 @@
     onOpenSettings={openSettings}
     onOpenExport={openExport}
     {nerdMode}
+    onToggleNerdMode={toggleNerdMode}
     onResetAmplitude={() => amplitude = resetAmplitudeValue()}
     onResetWavelength={() => wavelength = resetWavelengthValue()}
     onResetFrequency={() => frequency = resetFrequencyValue()}
@@ -439,6 +451,7 @@
     onResetRotation={() => rotation = resetRotationValue()}
     onResetSpacing={() => spacing = resetSpacingValue()}
     onResetThickness={() => thickness = resetThicknessValue()}
+    onResetTaper={() => taper = resetTaperValue()}
     onResetWaveCount={() => waveCount = resetWaveCountValue()}
     onResetWaveColor={() => waveColor = resetWaveColorValue()}
     onResetBackgroundColor={() => backgroundColor = resetBackgroundColorValue()}
@@ -462,9 +475,7 @@
 
   <SettingsModal
     isOpen={showSettingsModal}
-    {nerdMode}
     onClose={closeSettings}
-    onToggleNerdMode={toggleNerdMode}
   />
 
   <ExportModal
