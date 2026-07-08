@@ -1,12 +1,8 @@
 <script lang="ts">
-  import { Switch } from '$lib/components/ui/switch';
-  import { Label } from '$lib/components/ui/label';
   import { Button } from '$lib/components/ui/button';
 
   export let isOpen: boolean;
-  export let nerdMode: boolean;
   export let onClose: () => void;
-  export let onToggleNerdMode: (value: boolean) => void;
 
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') onClose();
@@ -33,14 +29,7 @@
     >
       <h2 class="text-white text-lg font-semibold mb-6">Settings</h2>
 
-      <div class="flex items-center justify-between mb-6">
-        <Label for="slider-values" class="text-white">Nerd Mode</Label>
-        <Switch
-          id="slider-values"
-          checked={nerdMode}
-          onCheckedChange={onToggleNerdMode}
-        />
-      </div>
+      <p class="text-white/50 text-sm mb-6">No settings available yet.</p>
 
       <div class="flex justify-end">
         <Button

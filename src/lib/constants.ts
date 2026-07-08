@@ -71,6 +71,16 @@ export const THICKNESS_RANGE = {
   default: DEFAULT_THICKNESS
 };
 
+// Default wave taper amount
+export const DEFAULT_TAPER = 0;
+
+export const TAPER_RANGE = {
+  min: 0,
+  max: 1,
+  step: 0.01,
+  default: DEFAULT_TAPER
+};
+
 // UI defaults
 export const DEFAULT_TOGGLES = {
   amplitude: true,

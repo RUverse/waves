@@ -18,6 +18,7 @@ export interface WaveState {
   rotation: number;
   spacing: number;
   thickness: number;
+  taper: number;
   waveCount: number;
   ampToggle: boolean;
   waveToggle: boolean;
