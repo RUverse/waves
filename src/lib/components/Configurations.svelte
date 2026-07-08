@@ -53,8 +53,8 @@
     <div class="flex items-center space-x-2">
       <Button 
         onclick={onResetAmplitude}
-        variant="outline"
-        class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
         title="Reset amplitude"
       >
         <ResetIcon />
@@ -84,8 +84,8 @@
         <span class="text-white text-xs w-12 text-right">{amplitudeVariation.toFixed(2)}</span>
         <Button 
           onclick={onResetAmplitudeVariation}
-          variant="outline"
-          class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+          variant="ghost"
+          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
           title="Reset to default"
         >
           <ResetIcon />
@@ -98,8 +98,8 @@
     <div class="flex items-center space-x-2">
       <Button 
         onclick={onResetWavelength}
-        variant="outline"
-        class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
         title="Reset wavelength"
       >
         <ResetIcon />
@@ -129,8 +129,8 @@
         <span class="text-white text-xs w-12 text-right">{wavelengthVariation.toFixed(2)}</span>
         <Button 
           onclick={onResetWavelengthVariation}
-          variant="outline"
-          class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+          variant="ghost"
+          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
           title="Reset to default"
         >
           <ResetIcon />
@@ -143,8 +143,8 @@
     <div class="flex items-center space-x-2">
       <Button 
         onclick={onResetFrequency}
-        variant="outline"
-        class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
         title="Reset frequency"
       >
         <ResetIcon />
@@ -174,8 +174,8 @@
         <span class="text-white text-xs w-12 text-right">{frequencyVariation.toFixed(2)}</span>
         <Button 
           onclick={onResetFrequencyVariation}
-          variant="outline"
-          class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+          variant="ghost"
+          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
           title="Reset to default"
         >
           <ResetIcon />
@@ -188,8 +188,8 @@
     <div class="flex items-center space-x-2">
       <Button 
         onclick={onResetPeriod}
-        variant="outline"
-        class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
         title="Reset period"
       >
         <ResetIcon />
@@ -219,8 +219,8 @@
         <span class="text-white text-xs w-12 text-right">{periodVariation.toFixed(2)}</span>
         <Button 
           onclick={onResetPeriodVariation}
-          variant="outline"
-          class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+          variant="ghost"
+          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
           title="Reset to default"
         >
           <ResetIcon />
@@ -233,8 +233,8 @@
     <div class="flex items-center space-x-2">
       <Button 
         onclick={onResetRotation}
-        variant="outline"
-        class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
         title="Reset rotation"
       >
         <ResetIcon />
@@ -262,8 +262,8 @@
       />
       <Button 
         onclick={onResetRotationVariation}
-        variant="outline"
-        class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
         title="Reset rotation variance"
       >
         <ResetIcon />
@@ -278,8 +278,8 @@
     <div class="flex items-center space-x-2">
       <Button 
         onclick={onResetSpacing}
-        variant="outline"
-        class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
         title="Reset spacing"
       >
         <ResetIcon />
@@ -309,8 +309,8 @@
         <span class="text-white text-xs w-12 text-right">{spacingVariation.toFixed(2)}</span>
         <Button 
           onclick={onResetSpacingVariation}
-          variant="outline"
-          class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+          variant="ghost"
+          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
           title="Reset to default"
         >
           <ResetIcon />
@@ -323,8 +323,8 @@
     <div class="flex items-center space-x-2">
       <Button 
         onclick={onResetWaveCount}
-        variant="outline"
-        class="w-6 h-6 p-0 text-xs bg-transparent border-white border-opacity-30 hover:bg-white hover:bg-opacity-10"
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
         title="Reset wave count"
       >
         <ResetIcon />

@@ -184,13 +184,7 @@
   }
 
   function togglePanel() {
-    if (document.startViewTransition) {
-      document.startViewTransition(() => {
-        showPanel = !showPanel;
-      });
-    } else {
-      showPanel = !showPanel;
-    }
+    showPanel = !showPanel;
   }
 
   function reset() {

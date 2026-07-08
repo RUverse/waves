@@ -12,7 +12,7 @@
   <div class="flex flex-wrap gap-2 max-w-md">
     {#each waves as wave (wave.id)}
       <div
-        class="relative px-3 py-2 pr-6 rounded text-xs bg-black bg-opacity-80 text-white border border-white border-opacity-30 hover:border-opacity-50 transition-all cursor-pointer {activeWaveId === wave.id ? 'border-white border-opacity-70' : ''}"
+        class="glass-btn relative px-3 py-1.5 pr-7 rounded-lg text-xs cursor-pointer {activeWaveId === wave.id ? 'is-active' : ''}"
         title={`${wave.name} - ${new Date(wave.timestamp).toLocaleString()}`}
         onclick={() => onSelectWave(wave)}
         onkeydown={(e) => e.key === 'Enter' && onSelectWave(wave)}
