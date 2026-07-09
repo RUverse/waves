@@ -266,23 +266,29 @@ ${sn}
   const INPUT_CLASS =
     'w-full bg-white/20 border border-white/20 rounded px-3 py-2 text-white text-sm';
 
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') onClose();
+  }
+
   onDestroy(() => {
     clearPreview();
     if (copyTimer) clearTimeout(copyTimer);
   });
 </script>
 
+<svelte:window on:keydown={isOpen ? handleKeydown : undefined} />
+
 {#if isOpen}
   <!-- Modal backdrop -->
   <div
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
     onclick={onClose}
     role="presentation"
   >
-    <!-- Modal content -->
+    <!-- Modal content - black tinted liquid glass -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-      class="bg-black bg-opacity-90 border border-white border-opacity-30 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-screen overflow-y-auto"
-      onkeydown={(e) => { if (e.key === 'Escape') onClose(); }}
+      class="glass-surface rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-screen overflow-y-auto"
       onclick={(e) => e.stopPropagation()}
       role="dialog"
       aria-modal="true"
@@ -291,7 +297,7 @@ ${sn}
       <h2 class="text-white text-lg font-semibold mb-4">Export Wave</h2>
 
       <!-- Tabs -->
-      <div class="flex gap-1 mb-6 border-b border-white border-opacity-10">
+      <div class="flex gap-1 mb-6 border-b border-white/10">
         <button
           class="px-4 py-2 text-sm {activeTab === 'image' ? 'text-white border-b-2 border-white' : 'text-white text-opacity-50'}"
           onclick={() => activeTab = 'image'}
@@ -401,7 +407,7 @@ ${sn}
           <div
             id="preview"
             bind:this={previewContainer}
-            class="border border-white border-opacity-20 rounded p-4 flex items-center justify-center flex-1 min-h-40 overflow-hidden"
+            class="border border-white/20 rounded-lg p-4 flex items-center justify-center flex-1 min-h-40 overflow-hidden"
           >
             {#if activeTab === 'image' && !onRenderWave}
               <span class="text-white text-sm opacity-50">Preview unavailable</span>
@@ -422,8 +428,8 @@ ${sn}
         <Button
           onclick={onClose}
           disabled={isExporting}
-          variant="outline"
-          class="bg-white bg-opacity-10 hover:bg-opacity-20 text-white disabled:opacity-50"
+          variant="ghost"
+          class="glass-btn h-9 px-5 rounded-lg text-sm font-medium"
         >
           {isCodeTab ? 'Close' : 'Cancel'}
         </Button>
@@ -431,8 +437,8 @@ ${sn}
           <Button
             onclick={handleExport}
             disabled={isExporting || !onRenderWave}
-            variant="outline"
-            class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white disabled:opacity-50"
+            variant="ghost"
+            class="glass-btn is-active h-9 px-5 rounded-lg text-sm font-medium"
           >
             {isExporting ? 'Exporting...' : 'Export PNG'}
           </Button>
@@ -440,16 +446,16 @@ ${sn}
           <Button
             onclick={handleDownload}
             disabled={!onGetEmbedConfig || !snippet}
-            variant="outline"
-            class="bg-white bg-opacity-10 hover:bg-opacity-20 text-white disabled:opacity-50"
+            variant="ghost"
+            class="glass-btn h-9 px-5 rounded-lg text-sm font-medium"
           >
             {activeTab === 'react' ? 'Download .jsx' : 'Download .html'}
           </Button>
           <Button
             onclick={handleCopy}
             disabled={!onGetEmbedConfig || !snippet}
-            variant="outline"
-            class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white disabled:opacity-50"
+            variant="ghost"
+            class="glass-btn is-active h-9 px-5 rounded-lg text-sm font-medium"
           >
             {copied ? 'Copied!' : copyFailed ? 'Press Ctrl+C' : 'Copy code'}
           </Button>
