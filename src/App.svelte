@@ -25,6 +25,7 @@
   import { loadState, saveState } from '$lib/storage';
   import { loadSettings, saveSettings } from '$lib/settingsStorage';
   import type { WaveState } from '$lib/types';
+  import type { EmbedConfig } from './embed';
   import { createWaveManagement } from '$hooks/useWaveManagement';
   import type { Wave, WaveConfig } from '$lib/configStorage';
   import {
@@ -356,6 +357,31 @@
     );
   }
 
+  // Snapshot the current wave into a fully self-contained embed config. Arrays
+  // are copied so later live edits don't mutate an already-generated snippet.
+  function getEmbedConfig(): EmbedConfig {
+    return {
+      amplitudes: [...amplitudes],
+      waveCount,
+      wavelength,
+      frequency,
+      period,
+      rotation,
+      spacing,
+      thickness,
+      taper,
+      waveColor,
+      backgroundColor,
+      cachedWavelengthVariations: [...cachedWavelengthVariations],
+      cachedFrequencyVariations: [...cachedFrequencyVariations],
+      cachedPeriodVariations: [...cachedPeriodVariations],
+      cachedRotationVariations: [...cachedRotationVariations],
+      cachedSpacingVariations: [...cachedSpacingVariations],
+      cachedThicknessVariations: [...cachedThicknessVariations],
+      vertexStep: CANVAS_SETTINGS.vertexStep
+    };
+  }
+
   function openExport() {
     showExportModal = true;
   }
@@ -487,5 +513,6 @@
     isOpen={showExportModal}
     onClose={closeExport}
     onRenderWave={renderWave}
+    onGetEmbedConfig={getEmbedConfig}
   />
 </div>

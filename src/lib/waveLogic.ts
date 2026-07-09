@@ -1,8 +1,8 @@
 import type p5 from 'p5';
 import type { WaveAttribute } from './types';
-import { 
-  DEFAULT_AMPLITUDE, 
-  DEFAULT_WAVE_COUNT, 
+import {
+  DEFAULT_AMPLITUDE,
+  DEFAULT_WAVE_COUNT,
   DEFAULT_WAVELENGTH,
   DEFAULT_FREQUENCY,
   DEFAULT_PERIOD,
@@ -14,19 +14,21 @@ import {
   DEFAULT_BACKGROUND_COLOR,
   WAVE_GENERATION,
   CANVAS_SETTINGS,
-  TAPER_RANGE,
   THICKNESS_RANGE,
-  BASE_SPACING,
-  INPUT_RANGE_FACTOR
+  BASE_SPACING
 } from './constants';
+import {
+  rotatePoint,
+  getTaperAmount,
+  getMaxTaperMultiplier,
+  clampThickness,
+  createVariableWidthWavePoints,
+  drawVariableWidthWaveCanvas
+} from './waveMath';
 
-interface Point {
-  x: number;
-  y: number;
-}
-
-const TAPER_PROFILE_CYCLES = 2;
-const MIN_TAPER_MULTIPLIER = 0.15;
+// Re-export the pure variation helpers so existing importers (App.svelte) keep
+// importing them from waveLogic while the definitions live in waveMath.
+export { generateCachedVariations, seededRandom } from './waveMath';
 
 /**
  * Applies random variation to a value based on variation strength
@@ -125,154 +127,6 @@ export function resetBackgroundColor(): string {
   return DEFAULT_BACKGROUND_COLOR;
 }
 
-/**
- * Simple seeded pseudo-random number generator for consistent wave variation
- */
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-}
-
-/**
- * Generate cached variations for all waves for a given attribute
- * These variations are fixed per wave index and don't change until variation strength changes
- */
-export function generateCachedVariations(
-  count: number,
-  variationStrength: number,
-  min: number,
-  max: number,
-  seedOffset: number = 0
-): number[] {
-  const variations: number[] = [];
-  
-  if (variationStrength <= 0) {
-    // If no variation, return array of zeros
-    for (let i = 0; i < count; i++) {
-      variations[i] = 0;
-    }
-    return variations;
-  }
-
-  const range = max - min;
-  const variationRange = range * variationStrength;
-
-  for (let i = 0; i < count; i++) {
-    // Generate a seeded random value between -1 and 1
-    const randomValue = seededRandom(i + seedOffset) * 2 - 1;
-    // Scale to variation range
-    variations[i] = randomValue * (variationRange / 2);
-  }
-  return variations;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function rotatePoint(
-  x: number,
-  y: number,
-  centerX: number,
-  centerY: number,
-  rotationCos: number,
-  rotationSin: number
-): Point {
-  const dx = x - centerX;
-  const dy = y - centerY;
-  return {
-    x: centerX + dx * rotationCos - dy * rotationSin,
-    y: centerY + dx * rotationSin + dy * rotationCos
-  };
-}
-
-function getTaperAmount(taper: number): number {
-  // Upper bound extended to match the pro-mode text input, so a manually
-  // entered taper beyond the slider range is honored.
-  return clamp(taper, TAPER_RANGE.min, TAPER_RANGE.max * INPUT_RANGE_FACTOR);
-}
-
-// Clamp a thickness to the render range. Upper bound extended to match the
-// pro-mode text input so manually entered thicknesses beyond the slider render.
-function clampThickness(value: number): number {
-  return clamp(value, THICKNESS_RANGE.min, THICKNESS_RANGE.max * INPUT_RANGE_FACTOR);
-}
-
-function getTaperMultiplier(t: number, taper: number, phase: number): number {
-  const amount = getTaperAmount(taper);
-  if (amount <= 0) return 1;
-
-  const profile = Math.sin(t * Math.PI * 2 * TAPER_PROFILE_CYCLES + phase);
-  return Math.max(MIN_TAPER_MULTIPLIER, 1 + amount * profile);
-}
-
-function getMaxTaperMultiplier(taper: number): number {
-  return 1 + getTaperAmount(taper);
-}
-
-function createVariableWidthWavePoints(
-  x: number,
-  yStart: number,
-  yEnd: number,
-  vertexStep: number,
-  amplitude: number,
-  wavelength: number,
-  offset: number,
-  frequency: number,
-  thickness: number,
-  taper: number,
-  phase: number,
-  centerX: number,
-  centerY: number,
-  rotationCos: number,
-  rotationSin: number
-): { left: Point[]; right: Point[] } {
-  const left: Point[] = [];
-  const right: Point[] = [];
-  const span = yEnd - yStart || 1;
-  let lastY = yStart;
-
-  const addPoint = (y: number) => {
-    const angle = y * wavelength + offset + frequency;
-    const waveX = x + Math.sin(angle) * amplitude;
-    const dxDy = Math.cos(angle) * amplitude * wavelength;
-    const normalLength = Math.hypot(1, dxDy);
-    const normalX = 1 / normalLength;
-    const normalY = -dxDy / normalLength;
-    const t = clamp((y - yStart) / span, 0, 1);
-    const localThickness = thickness * getTaperMultiplier(t, taper, phase);
-    const halfThickness = Math.max(localThickness / 2, 0.05);
-
-    left.push(rotatePoint(
-      waveX + normalX * halfThickness,
-      y + normalY * halfThickness,
-      centerX,
-      centerY,
-      rotationCos,
-      rotationSin
-    ));
-    right.push(rotatePoint(
-      waveX - normalX * halfThickness,
-      y - normalY * halfThickness,
-      centerX,
-      centerY,
-      rotationCos,
-      rotationSin
-    ));
-    lastY = y;
-  };
-
-  for (let y = yStart; y <= yEnd; y += vertexStep) {
-    addPoint(y);
-  }
-
-  if (lastY < yEnd) {
-    addPoint(yEnd);
-  }
-
-  return { left, right };
-}
-
 function drawVariableWidthWaveP5(
   p: p5,
   x: number,
@@ -318,56 +172,6 @@ function drawVariableWidthWaveP5(
     p.vertex(point.x, point.y);
   }
   p.endShape(p.CLOSE);
-}
-
-function drawVariableWidthWaveCanvas(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  yStart: number,
-  yEnd: number,
-  vertexStep: number,
-  amplitude: number,
-  wavelength: number,
-  offset: number,
-  frequency: number,
-  thickness: number,
-  taper: number,
-  phase: number,
-  centerX: number,
-  centerY: number,
-  rotationCos: number,
-  rotationSin: number
-): void {
-  const { left, right } = createVariableWidthWavePoints(
-    x,
-    yStart,
-    yEnd,
-    vertexStep,
-    amplitude,
-    wavelength,
-    offset,
-    frequency,
-    thickness,
-    taper,
-    phase,
-    centerX,
-    centerY,
-    rotationCos,
-    rotationSin
-  );
-
-  if (left.length === 0 || right.length === 0) return;
-
-  ctx.beginPath();
-  ctx.moveTo(left[0].x, left[0].y);
-  for (let i = 1; i < left.length; i++) {
-    ctx.lineTo(left[i].x, left[i].y);
-  }
-  for (let i = right.length - 1; i >= 0; i--) {
-    ctx.lineTo(right[i].x, right[i].y);
-  }
-  ctx.closePath();
-  ctx.fill();
 }
 
 /**
@@ -436,6 +240,10 @@ export function createWaveSketch(
       }
       setPeriodPhases(periodPhases);
 
+      // Clear to fully transparent first, then paint the (possibly translucent)
+      // background as a single composite. Without the clear, a background color
+      // with alpha < 1 would accumulate over previous frames and smear the waves.
+      p.clear();
       p.background(backgroundColor);
       if (taper > 0) {
         p.noStroke();
