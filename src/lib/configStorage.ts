@@ -45,7 +45,9 @@ export interface Wave {
 const SAVED_WAVES_KEY = 'ruwaves-saved-waves';
 
 /**
- * Generates a deterministic 10-character ID based on config values
+ * Generates a deterministic 10-character base ID based on config values.
+ * New saved records still need collision handling because two saves can have
+ * identical configs.
  */
 export function generateWaveId(config: WaveConfig): string {
   // Create a string from key config values
@@ -62,7 +64,7 @@ export function generateWaveId(config: WaveConfig): string {
     config.waveColor ?? DEFAULT_WAVE_COLOR,
     config.backgroundColor ?? DEFAULT_BACKGROUND_COLOR,
     config.waveCount,
-    config.baseAmplitudes.slice(0, 3).join(',') // First 3 amplitudes for uniqueness
+    (config.baseAmplitudes ?? []).slice(0, 3).join(',') // First 3 amplitudes for uniqueness
   ].join('|');
   
   // Simple hash function
@@ -78,14 +80,25 @@ export function generateWaveId(config: WaveConfig): string {
   return base36.padEnd(10, '0').substring(0, 10);
 }
 
+export function generateUniqueWaveId(config: WaveConfig, existingIds: Iterable<string> = []): string {
+  return getUniqueId(generateWaveId(config), existingIds);
+}
+
 export function loadSavedWaves(): Wave[] {
   if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(SAVED_WAVES_KEY);
-    const waves = stored ? JSON.parse(stored) : [];
-    return Array.isArray(waves)
-      ? waves.map((wave) => ({ ...wave, config: normalizeWaveConfig(wave.config) }))
-      : [];
+    const parsed = stored ? JSON.parse(stored) : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    const waves = normalizeSavedWaves(parsed);
+    if (JSON.stringify(waves) !== JSON.stringify(parsed)) {
+      saveSavedWaves(waves);
+    }
+
+    return waves;
   } catch (error) {
     console.error('Failed to load saved waves:', error);
     return [];
@@ -101,9 +114,9 @@ export function saveSavedWaves(waves: Wave[]): void {
   }
 }
 
-export function createWave(config: WaveConfig): Wave {
+export function createWave(config: WaveConfig, existingIds: Iterable<string> = []): Wave {
   const normalizedConfig = normalizeWaveConfig(config);
-  const id = generateWaveId(normalizedConfig);
+  const id = generateUniqueWaveId(normalizedConfig, existingIds);
   return {
     id,
     name: id, // Default name is the ID
@@ -132,7 +145,7 @@ export function normalizeWaveConfig(config: WaveConfig): WaveConfig {
     waveCountToggle: config.waveCountToggle,
     waveColor: config.waveColor ?? DEFAULT_WAVE_COLOR,
     backgroundColor: config.backgroundColor ?? DEFAULT_BACKGROUND_COLOR,
-    baseAmplitudes: config.baseAmplitudes,
+    baseAmplitudes: Array.isArray(config.baseAmplitudes) ? config.baseAmplitudes : [],
     amplitudeVariation: config.amplitudeVariation,
     wavelengthVariation: config.wavelengthVariation,
     frequencyVariation: config.frequencyVariation,
@@ -141,4 +154,52 @@ export function normalizeWaveConfig(config: WaveConfig): WaveConfig {
     spacingVariation: config.spacingVariation,
     thicknessVariation: config.thicknessVariation
   };
+}
+
+function normalizeSavedWaves(waves: unknown[]): Wave[] {
+  const usedIds = new Set<string>();
+  const normalized: Wave[] = [];
+
+  for (const storedWave of waves) {
+    if (!storedWave || typeof storedWave !== 'object') {
+      continue;
+    }
+
+    const wave = storedWave as Partial<Wave>;
+    if (!wave.config || typeof wave.config !== 'object') {
+      continue;
+    }
+
+    const config = normalizeWaveConfig(wave.config as WaveConfig);
+    const storedId = typeof wave.id === 'string' ? wave.id.trim() : '';
+    const baseId = storedId || generateWaveId(config);
+    const id = getUniqueId(baseId, usedIds);
+    usedIds.add(id);
+
+    const storedName = typeof wave.name === 'string' ? wave.name.trim() : '';
+    const name = storedName && storedName !== baseId ? storedName : id;
+    const timestamp = Number(wave.timestamp);
+
+    normalized.push({
+      id,
+      name,
+      config,
+      timestamp: Number.isFinite(timestamp) ? timestamp : Date.now()
+    });
+  }
+
+  return normalized;
+}
+
+function getUniqueId(baseId: string, existingIds: Iterable<string>): string {
+  const usedIds = new Set(existingIds);
+  let id = baseId;
+  let suffix = 1;
+
+  while (usedIds.has(id)) {
+    id = `${baseId}-${suffix}`;
+    suffix += 1;
+  }
+
+  return id;
 }
