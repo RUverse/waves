@@ -41,25 +41,47 @@ export const ROTATION_RANGE = {
   default: DEFAULT_ROTATION
 };
 
-// Default spacing (1.0 = normal spacing based on window width)
+// Absolute gap (in px) between adjacent waves when the spacing multiplier is
+// 1.0. Spacing is measured against this constant instead of the live canvas
+// width, so a given config renders identically on any screen size — a larger
+// screen simply shows more waves at the same scale rather than stretching the
+// whole pattern.
+export const BASE_SPACING = 240;
+
+// Spacing is the density control: gap = BASE_SPACING * spacing.
+// Lower = waves packed tighter, higher = spread apart. Viewport-independent.
+// Near 0 the waves collapse onto each other; negative values mirror the block
+// (reverse the wave order) and let waves cross over.
 export const DEFAULT_SPACING = 1.0;
 
 export const SPACING_RANGE = {
-  min: 0.3,
+  min: -3.0,
   max: 3.0,
   step: 0.1,
   default: DEFAULT_SPACING
 };
 
-// Default wave count
+// Wave count is the number of DISTINCT waves in the repeating pattern (the
+// motif length / variety), not the number drawn on screen. The motif is tiled
+// to fill the canvas, so this is viewport-independent. It only has a visible
+// effect when some per-wave variation is non-zero.
 export const DEFAULT_WAVE_COUNT = 5;
 
 export const WAVE_COUNT_RANGE = {
   min: 1,
-  max: 20,
+  max: 30,
   step: 1,
   default: DEFAULT_WAVE_COUNT
 };
+
+// Max per-wave positional jitter from spacing variation, as a fraction of the
+// gap. Kept below 0.5 so jittered waves never cross into an adjacent slot.
+export const SPACING_JITTER_MAX_FRACTION = 0.48;
+
+// The numeric text inputs (pro mode) accept values up to this multiple of a
+// slider's range, beyond the slider handle's own limits, for power users who
+// want to push a setting further than the slider allows.
+export const INPUT_RANGE_FACTOR = 4;
 
 // Default wave thickness
 export const DEFAULT_THICKNESS = 2;
@@ -113,7 +135,7 @@ export const WAVE_GENERATION = {
 };
 
 // Default variation values (strength of random variation applied to each attribute)
-export const DEFAULT_AMPLITUDE_VARIATION = 0.4;
+export const DEFAULT_AMPLITUDE_VARIATION = 0;
 export const DEFAULT_WAVELENGTH_VARIATION = 0;
 export const DEFAULT_FREQUENCY_VARIATION = 0;
 export const DEFAULT_PERIOD_VARIATION = 0;
@@ -159,8 +181,8 @@ export const ROTATION_VARIATION_RANGE = {
 
 export const SPACING_VARIATION_RANGE = {
   min: 0,
-  max: 2.0,
-  step: 0.1,
+  max: 1.0,
+  step: 0.01,
   default: DEFAULT_SPACING_VARIATION
 };
 

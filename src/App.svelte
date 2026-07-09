@@ -55,7 +55,7 @@
     FREQUENCY_RANGE,
     PERIOD_RANGE,
     ROTATION_RANGE,
-    SPACING_RANGE,
+    SPACING_JITTER_MAX_FRACTION,
     THICKNESS_RANGE,
     TAPER_RANGE,
     WAVE_COUNT_RANGE
@@ -75,6 +75,9 @@
   let taper = savedState?.taper ?? DEFAULT_TAPER;
   let waveCount = savedState?.waveCount ?? DEFAULT_WAVE_COUNT;
   let offset = 0;
+  // Per-wave accumulated period-variation drift, kept in sync from the sketch
+  // so exports reproduce the same per-wave phases shown on screen.
+  let periodPhases: number[] = [];
   
   // Wave variation (strength of random variation per attribute)
   let amplitudeVariation = savedState?.amplitudeVariation ?? DEFAULT_AMPLITUDE_VARIATION;
@@ -160,7 +163,7 @@
       cachedFrequencyVariations = generateCachedVariations(waveCount, frequencyVariation, FREQUENCY_RANGE.min, FREQUENCY_RANGE.max, variationSeed + 1000);
       cachedPeriodVariations = generateCachedVariations(waveCount, periodVariation, PERIOD_RANGE.min, PERIOD_RANGE.max, variationSeed + 2000);
       cachedRotationVariations = generateCachedVariations(waveCount, rotationVariation, ROTATION_RANGE.min, ROTATION_RANGE.max, variationSeed + 3000);
-      cachedSpacingVariations = generateCachedVariations(waveCount, spacingVariation, SPACING_RANGE.min, SPACING_RANGE.max, variationSeed + 4000);
+      cachedSpacingVariations = generateCachedVariations(waveCount, spacingVariation, -SPACING_JITTER_MAX_FRACTION, SPACING_JITTER_MAX_FRACTION, variationSeed + 4000);
       cachedThicknessVariations = generateCachedVariations(waveCount, thicknessVariation, THICKNESS_RANGE.min, THICKNESS_RANGE.max, variationSeed + 5000);
     }
   }
@@ -215,7 +218,7 @@
     );
     taper = Math.random() * TAPER_RANGE.max;
     waveCount = Math.floor(DEFAULT_WAVE_COUNT + (Math.random() - 0.5) * 10);
-    waveCount = Math.max(1, Math.min(20, waveCount)); // Clamp between 1 and 20
+    waveCount = Math.max(WAVE_COUNT_RANGE.min, Math.min(WAVE_COUNT_RANGE.max, waveCount));
   }
 
   function resetConfig() {
@@ -347,6 +350,7 @@
       cachedRotationVariations,
       cachedSpacingVariations,
       cachedThicknessVariations,
+      periodPhases,
       currentCanvasWidth,
       currentCanvasHeight
     );
@@ -387,7 +391,8 @@
       () => cachedPeriodVariations,
       () => cachedRotationVariations,
       () => cachedSpacingVariations,
-      () => cachedThicknessVariations
+      () => cachedThicknessVariations,
+      (value) => { periodPhases = value; }
     );
 
     const container = document.querySelector('#p5-container') as HTMLElement;
