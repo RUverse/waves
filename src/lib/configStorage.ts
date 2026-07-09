@@ -1,4 +1,10 @@
-import { DEFAULT_TAPER, DEFAULT_THICKNESS, DEFAULT_THICKNESS_VARIATION } from './constants';
+import {
+  DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_TAPER,
+  DEFAULT_THICKNESS,
+  DEFAULT_THICKNESS_VARIATION,
+  DEFAULT_WAVE_COLOR
+} from './constants';
 
 export interface WaveConfig {
   amplitude: number;
@@ -17,6 +23,8 @@ export interface WaveConfig {
   rotationToggle?: boolean;
   spacingToggle: boolean;
   waveCountToggle: boolean;
+  waveColor?: string;
+  backgroundColor?: string;
   baseAmplitudes: number[];
   amplitudeVariation?: number;
   wavelengthVariation?: number;
@@ -51,6 +59,8 @@ export function generateWaveId(config: WaveConfig): string {
     config.thickness ?? DEFAULT_THICKNESS,
     config.taper ?? DEFAULT_TAPER,
     config.thicknessVariation ?? DEFAULT_THICKNESS_VARIATION,
+    config.waveColor ?? DEFAULT_WAVE_COLOR,
+    config.backgroundColor ?? DEFAULT_BACKGROUND_COLOR,
     config.waveCount,
     config.baseAmplitudes.slice(0, 3).join(',') // First 3 amplitudes for uniqueness
   ].join('|');
@@ -72,7 +82,10 @@ export function loadSavedWaves(): Wave[] {
   if (typeof window === 'undefined') return [];
   try {
     const stored = localStorage.getItem(SAVED_WAVES_KEY);
-    return stored ? JSON.parse(stored) : [];
+    const waves = stored ? JSON.parse(stored) : [];
+    return Array.isArray(waves)
+      ? waves.map((wave) => ({ ...wave, config: normalizeWaveConfig(wave.config) }))
+      : [];
   } catch (error) {
     console.error('Failed to load saved waves:', error);
     return [];
@@ -89,11 +102,43 @@ export function saveSavedWaves(waves: Wave[]): void {
 }
 
 export function createWave(config: WaveConfig): Wave {
-  const id = generateWaveId(config);
+  const normalizedConfig = normalizeWaveConfig(config);
+  const id = generateWaveId(normalizedConfig);
   return {
     id,
     name: id, // Default name is the ID
-    config,
+    config: normalizedConfig,
     timestamp: Date.now()
+  };
+}
+
+export function normalizeWaveConfig(config: WaveConfig): WaveConfig {
+  return {
+    amplitude: config.amplitude,
+    wavelength: config.wavelength,
+    frequency: config.frequency,
+    period: config.period,
+    rotation: config.rotation,
+    spacing: config.spacing,
+    thickness: config.thickness,
+    taper: config.taper,
+    waveCount: config.waveCount,
+    ampToggle: config.ampToggle,
+    waveToggle: config.waveToggle,
+    freqToggle: config.freqToggle,
+    perToggle: config.perToggle,
+    rotationToggle: config.rotationToggle,
+    spacingToggle: config.spacingToggle,
+    waveCountToggle: config.waveCountToggle,
+    waveColor: config.waveColor ?? DEFAULT_WAVE_COLOR,
+    backgroundColor: config.backgroundColor ?? DEFAULT_BACKGROUND_COLOR,
+    baseAmplitudes: config.baseAmplitudes,
+    amplitudeVariation: config.amplitudeVariation,
+    wavelengthVariation: config.wavelengthVariation,
+    frequencyVariation: config.frequencyVariation,
+    periodVariation: config.periodVariation,
+    rotationVariation: config.rotationVariation,
+    spacingVariation: config.spacingVariation,
+    thicknessVariation: config.thicknessVariation
   };
 }

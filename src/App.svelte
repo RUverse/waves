@@ -151,6 +151,7 @@
   $: currentWaveConfigString = JSON.stringify({
     amplitude, wavelength, frequency, period, rotation, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
+    waveColor, backgroundColor,
     baseAmplitudes,
     amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, spacingVariation, thicknessVariation
   });
@@ -255,6 +256,7 @@
   const getCurrentConfig = (): WaveConfig => ({
     amplitude, wavelength, frequency, period, rotation, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
+    waveColor, backgroundColor,
     baseAmplitudes,
     amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, spacingVariation, thicknessVariation
   });
@@ -277,6 +279,8 @@
     rotationToggle = config.rotationToggle ?? DEFAULT_TOGGLES.rotation;
     spacingToggle = config.spacingToggle;
     waveCountToggle = config.waveCountToggle;
+    waveColor = config.waveColor ?? DEFAULT_WAVE_COLOR;
+    backgroundColor = config.backgroundColor ?? DEFAULT_BACKGROUND_COLOR;
     baseAmplitudes = config.baseAmplitudes;
     amplitudeVariation = config.amplitudeVariation ?? DEFAULT_AMPLITUDE_VARIATION;
     wavelengthVariation = config.wavelengthVariation ?? DEFAULT_WAVELENGTH_VARIATION;
