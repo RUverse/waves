@@ -15,7 +15,9 @@ import {
   WAVE_GENERATION,
   CANVAS_SETTINGS,
   TAPER_RANGE,
-  THICKNESS_RANGE
+  THICKNESS_RANGE,
+  BASE_SPACING,
+  INPUT_RANGE_FACTOR
 } from './constants';
 
 interface Point {
@@ -185,7 +187,15 @@ function rotatePoint(
 }
 
 function getTaperAmount(taper: number): number {
-  return clamp(taper, TAPER_RANGE.min, TAPER_RANGE.max);
+  // Upper bound extended to match the pro-mode text input, so a manually
+  // entered taper beyond the slider range is honored.
+  return clamp(taper, TAPER_RANGE.min, TAPER_RANGE.max * INPUT_RANGE_FACTOR);
+}
+
+// Clamp a thickness to the render range. Upper bound extended to match the
+// pro-mode text input so manually entered thicknesses beyond the slider render.
+function clampThickness(value: number): number {
+  return clamp(value, THICKNESS_RANGE.min, THICKNESS_RANGE.max * INPUT_RANGE_FACTOR);
 }
 
 function getTaperMultiplier(t: number, taper: number, phase: number): number {
@@ -382,9 +392,16 @@ export function createWaveSketch(
   getCachedPeriodVariations: () => number[] = () => [],
   getCachedRotationVariations: () => number[] = () => [],
   getCachedSpacingVariations: () => number[] = () => [],
-  getCachedThicknessVariations: () => number[] = () => []
+  getCachedThicknessVariations: () => number[] = () => [],
+  setPeriodPhases: (value: number[]) => void = () => {}
 ) {
   return (p: p5) => {
+    // Per-wave accumulated animation phase. Each wave's phase advances by
+    // basePeriod plus its own period variation every frame, so waves with
+    // period variance drift out of sync over time. Integrated (rather than
+    // recomputed from a frame count) so live slider changes never cause jumps.
+    const periodPhases: number[] = [];
+
     p.setup = () => {
       p.createCanvas(p.windowWidth, p.windowHeight);
       p.strokeWeight(CANVAS_SETTINGS.strokeWeight);
@@ -407,9 +424,17 @@ export function createWaveSketch(
       
       const cachedWavelengthVariations = getCachedWavelengthVariations();
       const cachedFrequencyVariations = getCachedFrequencyVariations();
+      const cachedPeriodVariations = getCachedPeriodVariations();
       const cachedRotationVariations = getCachedRotationVariations();
       const cachedSpacingVariations = getCachedSpacingVariations();
       const cachedThicknessVariations = getCachedThicknessVariations();
+
+      // Accumulate each wave's period-variation drift (on top of the shared
+      // base scroll `offset`), so varied waves gradually fall out of sync.
+      for (let i = 0; i < waveCount; i++) {
+        periodPhases[i] = (periodPhases[i] ?? 0) + (cachedPeriodVariations[i] ?? 0);
+      }
+      setPeriodPhases(periodPhases);
 
       p.background(backgroundColor);
       if (taper > 0) {
@@ -420,21 +445,19 @@ export function createWaveSketch(
         p.stroke(waveColor);
       }
 
-      // Calculate base spacing and apply spacing multiplier
-      const baseSp = p.width / (waveCount + 1);
-      const adjustedSpacing = baseSp * baseSpacing;
-      const totalWidth = adjustedSpacing * waveCount;
-      const startOffset = (p.width - totalWidth) / 2;
+      // Gap between waves is an absolute pixel value (BASE_SPACING * spacing),
+      // independent of the canvas width, so a given config renders identically
+      // on any screen size.
+      const adjustedSpacing = BASE_SPACING * baseSpacing;
 
       const centerX = p.width / 2;
       const centerY = p.height / 2;
 
-      // Each wave is a near-vertical line that we rotate point-by-point around the
-      // canvas center. A line only as tall as the canvas leaves triangular gaps at
-      // the edges once it's tilted ("cutout"). To keep the canvas fully covered at
-      // ANY rotation, we extend both the length of every wave and the number of
-      // waves so the pattern always fills the canvas's bounding circle (half the
-      // diagonal, plus margin for amplitude and stroke width).
+      // Each wave is a near-vertical line rotated point-by-point around the
+      // canvas center. We draw every wave much taller than the canvas (out to
+      // its bounding circle, plus margin for amplitude and stroke width) so a
+      // single wave still spans the whole canvas at ANY rotation without leaving
+      // a triangular cutout at the top/bottom.
       const maxAmplitude = amplitudes.reduce(
         (max, a) => Math.max(max, Math.abs(a ?? 0)),
         0
@@ -442,10 +465,8 @@ export function createWaveSketch(
       const maxThickness = waveCount > 0
         ? Math.max(
             ...Array.from({ length: waveCount }, (_, idx) =>
-              clamp(
-                baseThickness + (cachedThicknessVariations[idx] ?? 0),
-                THICKNESS_RANGE.min,
-                THICKNESS_RANGE.max
+              clampThickness(
+                baseThickness + (cachedThicknessVariations[idx] ?? 0)
               ) * getMaxTaperMultiplier(taper)
             )
           )
@@ -455,33 +476,28 @@ export function createWaveSketch(
         maxAmplitude +
         maxThickness;
 
-      // Range of wave indices whose base position falls within the bounding circle.
-      // Indices outside [0, waveCount) are wrapped so the extra waves that fill the
-      // corners seamlessly tile the same (possibly varied) pattern.
-      let iMin = 0;
-      let iMax = waveCount - 1;
-      if (waveCount > 0 && adjustedSpacing > 0) {
-        iMin = Math.floor((centerX - coverRadius - startOffset) / adjustedSpacing - 1) - 1;
-        iMax = Math.ceil((centerX + coverRadius - startOffset) / adjustedSpacing - 1) + 1;
-      }
-
-      for (let i = iMin; i <= iMax; i++) {
-        // Wrap index into the valid range for per-wave attributes
-        const idx = ((i % waveCount) + waveCount) % waveCount;
+      // Draw EXACTLY waveCount waves as a horizontally centered block, so the
+      // wave count is literal: 1 means one wave, 5 means five.
+      for (let i = 0; i < waveCount; i++) {
+        const idx = i;
         const amplitude = amplitudes[idx] ?? 0;
         const waveWavelength = baseWavelength + (cachedWavelengthVariations[idx] ?? 0);
         const waveFrequency = baseFrequency + (cachedFrequencyVariations[idx] ?? 0);
         const waveRotation = baseRotation + (cachedRotationVariations[idx] ?? 0);
-        const waveThickness = clamp(
-          baseThickness + (cachedThicknessVariations[idx] ?? 0),
-          THICKNESS_RANGE.min,
-          THICKNESS_RANGE.max
+        const waveThickness = clampThickness(
+          baseThickness + (cachedThicknessVariations[idx] ?? 0)
         );
         const rotationRadians = waveRotation * Math.PI / 180;
         const rotationCos = Math.cos(rotationRadians);
         const rotationSin = Math.sin(rotationRadians);
 
-        const x = startOffset + adjustedSpacing * (i + 1);
+        // Spacing variation jitters each wave's position by a fraction of the
+        // gap (values are pre-scaled to ±SPACING_JITTER_MAX_FRACTION).
+        const spacingJitter = (cachedSpacingVariations[idx] ?? 0) * adjustedSpacing;
+        const x = centerX + (i - (waveCount - 1) / 2) * adjustedSpacing + spacingJitter;
+
+        // Shared base scroll plus this wave's accumulated period-variation drift.
+        const wavePhase = offset + (periodPhases[idx] ?? 0);
 
         if (taper > 0) {
           drawVariableWidthWaveP5(
@@ -492,7 +508,7 @@ export function createWaveSketch(
             CANVAS_SETTINGS.vertexStep,
             amplitude,
             waveWavelength,
-            offset,
+            wavePhase,
             waveFrequency,
             waveThickness,
             taper,
@@ -506,7 +522,7 @@ export function createWaveSketch(
           p.strokeWeight(waveThickness);
           p.beginShape();
           for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += CANVAS_SETTINGS.vertexStep) {
-            const waveX = x + p.sin(y * waveWavelength + offset + waveFrequency) * amplitude;
+            const waveX = x + p.sin(y * waveWavelength + wavePhase + waveFrequency) * amplitude;
             const rotatedPoint = rotatePoint(waveX, y, centerX, centerY, rotationCos, rotationSin);
             p.vertex(rotatedPoint.x, rotatedPoint.y);
           }
@@ -550,6 +566,7 @@ export function renderWaveToCanvas(
   cachedRotationVariations: number[],
   cachedSpacingVariations: number[],
   cachedThicknessVariations: number[],
+  periodPhases: number[] = [],
   originalCanvasWidth: number = width,
   originalCanvasHeight: number = height
 ): HTMLCanvasElement | null {
@@ -576,27 +593,23 @@ export function renderWaveToCanvas(
     
     // Scale stroke weight proportionally (use average scale)
     const avgScale = (scaleX + scaleY) / 2;
-    ctx.lineWidth = clamp(thickness, THICKNESS_RANGE.min, THICKNESS_RANGE.max) * avgScale;
+    ctx.lineWidth = clampThickness(thickness) * avgScale;
 
-    // Calculate spacing based on original canvas width, then scale to export dimensions
-    // This ensures the waves appear at the same visual positions regardless of export size
-    const baseSp = originalCanvasWidth / (waveCount + 1);
+    // Gap is an absolute pixel value (BASE_SPACING * spacing), matching the
+    // live sketch so the export reproduces exactly what's on screen, then
+    // scaled to the export dimensions.
+    const baseSp = BASE_SPACING;
     const adjustedSpacing = baseSp * spacing;
-    const totalWidth = adjustedSpacing * waveCount;
-    const startOffset = (originalCanvasWidth - totalWidth) / 2;
-
-    // Scale positions to export dimensions
-    const scaledStartOffset = startOffset * scaleX;
     const scaledAdjustedSpacing = adjustedSpacing * scaleX;
-    
+
     // Scale vertex step for smooth rendering at different resolutions
     const scaledVertexStep = Math.max(1, Math.round(CANVAS_SETTINGS.vertexStep / avgScale));
 
     const centerX = width / 2;
     const centerY = height / 2;
 
-    // Extend the wave length and count so the pattern fully covers the canvas at
-    // any rotation, avoiding edge cutouts (mirrors createWaveSketch).
+    // Draw each wave much taller than the canvas so it spans any rotation
+    // without an edge cutout (mirrors createWaveSketch).
     const maxScaledAmplitude = amplitudes.reduce(
       (max, a) => Math.max(max, Math.abs((a ?? 0) * scaleX)),
       0
@@ -605,10 +618,8 @@ export function renderWaveToCanvas(
     const maxScaledThickness = waveCount > 0
       ? Math.max(
           ...Array.from({ length: waveCount }, (_, idx) =>
-            clamp(
-              thickness + (cachedThicknessVariations[idx] ?? 0),
-              THICKNESS_RANGE.min,
-              THICKNESS_RANGE.max
+            clampThickness(
+              thickness + (cachedThicknessVariations[idx] ?? 0)
             ) * avgScale * getMaxTaperMultiplier(taperAmount)
           )
         )
@@ -616,31 +627,26 @@ export function renderWaveToCanvas(
     const coverRadius =
       Math.hypot(width, height) / 2 + maxScaledAmplitude + maxScaledThickness;
 
-    let iMin = 0;
-    let iMax = waveCount - 1;
-    if (waveCount > 0 && scaledAdjustedSpacing > 0) {
-      iMin = Math.floor((centerX - coverRadius - scaledStartOffset) / scaledAdjustedSpacing - 1) - 1;
-      iMax = Math.ceil((centerX + coverRadius - scaledStartOffset) / scaledAdjustedSpacing - 1) + 1;
-    }
-
-    // Draw each wave
-    for (let i = iMin; i <= iMax; i++) {
-      // Wrap index into the valid range so the extra corner-filling waves tile
-      const idx = ((i % waveCount) + waveCount) % waveCount;
+    // Draw EXACTLY waveCount waves as a horizontally centered block, matching
+    // the live sketch (wave count is literal).
+    for (let i = 0; i < waveCount; i++) {
+      const idx = i;
       const scaledAmplitude = (amplitudes[idx] ?? 0) * scaleX;
       const waveWavelength = wavelength + (cachedWavelengthVariations[idx] ?? 0);
       const waveFrequency = frequency + (cachedFrequencyVariations[idx] ?? 0);
       const waveRotation = rotation + (cachedRotationVariations[idx] ?? 0);
-      const waveThickness = clamp(
-        thickness + (cachedThicknessVariations[idx] ?? 0),
-        THICKNESS_RANGE.min,
-        THICKNESS_RANGE.max
+      const waveThickness = clampThickness(
+        thickness + (cachedThicknessVariations[idx] ?? 0)
       ) * avgScale;
       const rotationRadians = waveRotation * Math.PI / 180;
       const rotationCos = Math.cos(rotationRadians);
       const rotationSin = Math.sin(rotationRadians);
 
-      const x = scaledStartOffset + scaledAdjustedSpacing * (i + 1);
+      const spacingJitter = (cachedSpacingVariations[idx] ?? 0) * scaledAdjustedSpacing;
+      const x = centerX + (i - (waveCount - 1) / 2) * scaledAdjustedSpacing + spacingJitter;
+
+      // Match the live sketch: shared base scroll plus this wave's period drift.
+      const wavePhase = offset + (periodPhases[idx] ?? 0);
 
       if (taperAmount > 0) {
         drawVariableWidthWaveCanvas(
@@ -651,7 +657,7 @@ export function renderWaveToCanvas(
           scaledVertexStep,
           scaledAmplitude,
           waveWavelength,
-          offset,
+          wavePhase,
           waveFrequency,
           waveThickness,
           taperAmount,
@@ -666,7 +672,7 @@ export function renderWaveToCanvas(
         ctx.beginPath();
         let first = true;
         for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += scaledVertexStep) {
-          const waveX = x + Math.sin(y * waveWavelength + offset + waveFrequency) * scaledAmplitude;
+          const waveX = x + Math.sin(y * waveWavelength + wavePhase + waveFrequency) * scaledAmplitude;
           const rotatedPoint = rotatePoint(waveX, y, centerX, centerY, rotationCos, rotationSin);
           if (first) {
             ctx.moveTo(rotatedPoint.x, rotatedPoint.y);
