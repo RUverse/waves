@@ -14,6 +14,8 @@
   export let decimals: number = 1;
   export let onReset: () => void;
   export let nerdMode: boolean = false;
+  // The setting's default; the reset button is disabled when already at it.
+  export let defaultValue: number | null = null;
 
   // Variation (optional)
   export let hasVariation: boolean = false;
@@ -23,6 +25,11 @@
   export let variationStep: number = 0.01;
   export let variationDecimals: number = 2;
   export let onResetVariation: () => void = () => {};
+  // The variation's default (0 for every attribute); its reset is disabled at it.
+  export let variationDefault: number = 0;
+
+  $: atDefault = defaultValue !== null && value === defaultValue;
+  $: varAtDefault = variation === variationDefault;
 
   // Whether the variation row is expanded. Auto-open when a loaded config
   // already has a non-zero variation.
@@ -79,9 +86,10 @@
   <div class="flex items-center space-x-2">
     <Button
       onclick={onReset}
+      disabled={atDefault}
       variant="ghost"
       class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center shrink-0"
-      title={`Reset ${label.toLowerCase()}`}
+      title={atDefault ? `${label} is at default` : `Reset ${label.toLowerCase()}`}
     >
       <ResetIcon />
     </Button>
@@ -127,9 +135,10 @@
     <div class="flex items-center space-x-2 ml-8 mt-1">
       <Button
         onclick={onResetVariation}
+        disabled={varAtDefault}
         variant="ghost"
         class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center shrink-0"
-        title="Reset variance"
+        title={varAtDefault ? 'Variance is at default' : 'Reset variance'}
       >
         <ResetIcon />
       </Button>

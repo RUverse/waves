@@ -10,6 +10,17 @@
   import Configurations from './Configurations.svelte';
   import ResetIcon from './ResetIcon.svelte';
   import type { Wave } from '$lib/configStorage';
+  import { DEFAULT_WAVE_COLOR, DEFAULT_BACKGROUND_COLOR } from '$lib/constants';
+
+  // Normalize a color to lowercase 8-digit hex so #ffffff and #ffffffff compare
+  // equal when deciding whether a color reset is already at its default.
+  function normColor(c: string): string {
+    let s = (c || '').trim().toLowerCase();
+    if (s[0] === '#') s = s.slice(1);
+    if (s.length === 3) s = s.split('').map((ch) => ch + ch).join('');
+    if (s.length === 6) s += 'ff';
+    return s;
+  }
 
   // Props
   export let showPanel: boolean;
@@ -49,6 +60,16 @@
   export let onResetBackgroundColor: () => void;
   export let waveColor: string;
   export let backgroundColor: string;
+
+  $: waveColorAtDefault = normColor(waveColor) === normColor(DEFAULT_WAVE_COLOR);
+  $: backgroundColorAtDefault = normColor(backgroundColor) === normColor(DEFAULT_BACKGROUND_COLOR);
+  $: colorsAtDefault = waveColorAtDefault && backgroundColorAtDefault;
+
+  function resetColors() {
+    onResetWaveColor();
+    onResetBackgroundColor();
+  }
+
   export let amplitudeVariation: number;
   export let wavelengthVariation: number;
   export let frequencyVariation: number;
@@ -166,39 +187,28 @@
       {onResetThicknessVariation}
     />
 
-    <!-- Color Pickers -->
-    <div class="flex items-center space-x-2 pt-3 border-t border-white/10">
+    <!-- Colors row: one reset on the left resets both wave + background -->
+    <div class="flex items-center space-x-2">
+      <Button
+        onclick={resetColors}
+        disabled={colorsAtDefault}
+        variant="ghost"
+        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center shrink-0"
+        title={colorsAtDefault ? 'Colors are at default' : 'Reset colors'}
+      >
+        <ResetIcon />
+      </Button>
       <ColorPicker
         label="Wave"
         bind:value={waveColor}
         onChange={(color) => waveColor = color}
       />
-      {#if nerdMode}
-        <Button
-          onclick={onResetWaveColor}
-          variant="ghost"
-          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
-          title="Reset to default"
-        >
-          <ResetIcon />
-        </Button>
-      {/if}
-      <div class="mx-2"></div>
+      <div class="mx-1"></div>
       <ColorPicker
         label="Background"
         bind:value={backgroundColor}
         onChange={(color) => backgroundColor = color}
       />
-      {#if nerdMode}
-        <Button
-          onclick={onResetBackgroundColor}
-          variant="ghost"
-          class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center"
-          title="Reset to default"
-        >
-          <ResetIcon />
-        </Button>
-      {/if}
     </div>
         </div>
         </div>

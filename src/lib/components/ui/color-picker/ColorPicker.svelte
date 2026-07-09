@@ -153,6 +153,14 @@
   }
   function onScrollOrResize() { if (open) close(); }
 
+  // Close on Escape and stop it here so the app doesn't also toggle the panel.
+  function onKeydown(e: KeyboardEvent) {
+    if (open && e.key === "Escape") {
+      close();
+      e.stopPropagation();
+    }
+  }
+
   function portal(node: HTMLElement) {
     document.body.appendChild(node);
     return { destroy() { if (node.parentNode) node.parentNode.removeChild(node); } };
@@ -162,12 +170,14 @@
     window.addEventListener("mousedown", onDocPointer, true);
     window.addEventListener("scroll", onScrollOrResize, true);
     window.addEventListener("resize", onScrollOrResize, true);
+    window.addEventListener("keydown", onKeydown, true);
   }
   onDestroy(() => {
     if (typeof window !== "undefined") {
       window.removeEventListener("mousedown", onDocPointer, true);
       window.removeEventListener("scroll", onScrollOrResize, true);
       window.removeEventListener("resize", onScrollOrResize, true);
+      window.removeEventListener("keydown", onKeydown, true);
     }
   });
 </script>
