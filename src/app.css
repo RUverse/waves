@@ -118,6 +118,19 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Tailwind v4's preflight no longer sets cursor:pointer on buttons. Restore it
+     for all interactive controls; disabled ones fall back to not-allowed. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 /* ===== Black-tinted liquid glass design system ===== */

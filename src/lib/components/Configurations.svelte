@@ -61,6 +61,7 @@
     min={WAVE_COUNT_RANGE.min}
     max={WAVE_COUNT_RANGE.max}
     step={WAVE_COUNT_RANGE.step}
+    defaultValue={WAVE_COUNT_RANGE.default}
     decimals={0}
     onReset={onResetWaveCount}
     {nerdMode}
@@ -72,6 +73,7 @@
     min={AMPLITUDE_RANGE.min}
     max={AMPLITUDE_RANGE.max}
     step={AMPLITUDE_RANGE.step}
+    defaultValue={AMPLITUDE_RANGE.default}
     decimals={1}
     onReset={onResetAmplitude}
     {nerdMode}
@@ -89,6 +91,7 @@
     min={WAVELENGTH_RANGE.min}
     max={WAVELENGTH_RANGE.max}
     step={WAVELENGTH_RANGE.step}
+    defaultValue={WAVELENGTH_RANGE.default}
     decimals={3}
     onReset={onResetWavelength}
     {nerdMode}
@@ -106,6 +109,7 @@
     min={FREQUENCY_RANGE.min}
     max={FREQUENCY_RANGE.max}
     step={FREQUENCY_RANGE.step}
+    defaultValue={FREQUENCY_RANGE.default}
     decimals={2}
     onReset={onResetFrequency}
     {nerdMode}
@@ -123,6 +127,7 @@
     min={PERIOD_RANGE.min}
     max={PERIOD_RANGE.max}
     step={PERIOD_RANGE.step}
+    defaultValue={PERIOD_RANGE.default}
     decimals={3}
     onReset={onResetPeriod}
     {nerdMode}
@@ -140,6 +145,7 @@
     min={ROTATION_RANGE.min}
     max={ROTATION_RANGE.max}
     step={ROTATION_RANGE.step}
+    defaultValue={ROTATION_RANGE.default}
     decimals={0}
     onReset={onResetRotation}
     {nerdMode}
@@ -157,6 +163,7 @@
     min={SPACING_RANGE.min}
     max={SPACING_RANGE.max}
     step={SPACING_RANGE.step}
+    defaultValue={SPACING_RANGE.default}
     decimals={2}
     onReset={onResetSpacing}
     {nerdMode}
@@ -174,6 +181,7 @@
     min={THICKNESS_RANGE.min}
     max={THICKNESS_RANGE.max}
     step={THICKNESS_RANGE.step}
+    defaultValue={THICKNESS_RANGE.default}
     decimals={1}
     onReset={onResetThickness}
     {nerdMode}
@@ -191,6 +199,7 @@
     min={TAPER_RANGE.min}
     max={TAPER_RANGE.max}
     step={TAPER_RANGE.step}
+    defaultValue={TAPER_RANGE.default}
     decimals={2}
     onReset={onResetTaper}
     {nerdMode}

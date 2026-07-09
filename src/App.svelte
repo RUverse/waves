@@ -430,10 +430,15 @@
       currentCanvasHeight = window.innerHeight;
     };
 
-    // Keyboard shortcut: spacebar toggles panel
+    // Keyboard shortcuts: spacebar and Escape toggle the panel. Escape is
+    // skipped while a modal is open (it closes the modal instead), and a
+    // color-picker popup swallows Escape before it reaches here to close itself.
     const handleKeydown = (e: KeyboardEvent) => {
       if (e.key === ' ') {
         e.preventDefault();
+        togglePanel();
+      } else if (e.key === 'Escape') {
+        if (showSettingsModal || showExportModal) return;
         togglePanel();
       }
     };
