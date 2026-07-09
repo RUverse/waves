@@ -3,6 +3,7 @@ import {
   loadSavedWaves, 
   saveSavedWaves, 
   createWave,
+  normalizeWaveConfig,
   type Wave,
   type WaveConfig
 } from '$lib/configStorage';
@@ -21,23 +22,31 @@ export function createWaveManagement() {
    * Otherwise, it creates a new wave
    */
   function saveWave(config: WaveConfig, currentConfigString: string) {
-    const wave = createWave(config);
     const currentActiveId = get(activeWaveId);
+    const waves = get(savedWaves);
     
-    // If updating existing wave, replace it
     if (currentActiveId) {
-      savedWaves.update(waves => 
-        waves.map(w => 
-          w.id === currentActiveId ? { ...wave, timestamp: w.timestamp, name: w.name } : w
-        )
-      );
-    } else {
-      // Add new wave
-      savedWaves.update(waves => [...waves, wave]);
-      activeWaveId.set(wave.id);
+      const activeWave = waves.find((wave) => wave.id === currentActiveId);
+
+      if (activeWave) {
+        const normalizedConfig = normalizeWaveConfig(config);
+        const nextWaves = waves.map((wave) =>
+          wave.id === currentActiveId ? { ...wave, config: normalizedConfig } : wave
+        );
+
+        savedWaves.set(nextWaves);
+        saveSavedWaves(nextWaves);
+        savedWaveSnapshot.set(currentConfigString);
+        return;
+      }
     }
     
-    saveSavedWaves(get(savedWaves));
+    const wave = createWave(config, waves.map((wave) => wave.id));
+    const nextWaves = [...waves, wave];
+
+    savedWaves.set(nextWaves);
+    activeWaveId.set(wave.id);
+    saveSavedWaves(nextWaves);
     savedWaveSnapshot.set(currentConfigString);
   }
 
@@ -46,13 +55,14 @@ export function createWaveManagement() {
    * Always creates a new wave, even if one is currently active
    */
   function saveConfigAsNew(config: WaveConfig, currentConfigString: string) {
-    const wave = createWave(config);
-    
-    // Always add as new wave
-    savedWaves.update(waves => [...waves, wave]);
+    const waves = get(savedWaves);
+    const wave = createWave(config, waves.map((wave) => wave.id));
+    const nextWaves = [...waves, wave];
+
+    savedWaves.set(nextWaves);
     activeWaveId.set(wave.id);
     
-    saveSavedWaves(get(savedWaves));
+    saveSavedWaves(nextWaves);
     savedWaveSnapshot.set(currentConfigString);
   }
 
