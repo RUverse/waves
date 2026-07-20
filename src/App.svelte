@@ -15,6 +15,7 @@
     resetFrequency as resetFrequencyValue,
     resetPeriod as resetPeriodValue,
     resetRotation as resetRotationValue,
+    resetCurvature as resetCurvatureValue,
     resetSpacing as resetSpacingValue,
     resetThickness as resetThicknessValue,
     resetTaper as resetTaperValue,
@@ -34,6 +35,7 @@
     DEFAULT_FREQUENCY,
     DEFAULT_PERIOD,
     DEFAULT_ROTATION,
+    DEFAULT_CURVATURE,
     DEFAULT_SPACING,
     DEFAULT_THICKNESS,
     DEFAULT_TAPER,
@@ -43,6 +45,7 @@
     DEFAULT_FREQUENCY_VARIATION,
     DEFAULT_PERIOD_VARIATION,
     DEFAULT_ROTATION_VARIATION,
+    DEFAULT_CURVATURE_VARIATION,
     DEFAULT_SPACING_VARIATION,
     DEFAULT_THICKNESS_VARIATION,
     DEFAULT_TOGGLES,
@@ -56,6 +59,7 @@
     FREQUENCY_RANGE,
     PERIOD_RANGE,
     ROTATION_RANGE,
+    CURVATURE_RANGE,
     SPACING_JITTER_MAX_FRACTION,
     THICKNESS_RANGE,
     TAPER_RANGE,
@@ -71,6 +75,7 @@
   let frequency = savedState?.frequency ?? DEFAULT_FREQUENCY;
   let period = savedState?.period ?? DEFAULT_PERIOD;
   let rotation = savedState?.rotation ?? DEFAULT_ROTATION;
+  let curvature = savedState?.curvature ?? DEFAULT_CURVATURE;
   let spacing = savedState?.spacing ?? DEFAULT_SPACING;
   let thickness = savedState?.thickness ?? DEFAULT_THICKNESS;
   let taper = savedState?.taper ?? DEFAULT_TAPER;
@@ -86,6 +91,7 @@
   let frequencyVariation = savedState?.frequencyVariation ?? DEFAULT_FREQUENCY_VARIATION;
   let periodVariation = savedState?.periodVariation ?? DEFAULT_PERIOD_VARIATION;
   let rotationVariation = savedState?.rotationVariation ?? DEFAULT_ROTATION_VARIATION;
+  let curvatureVariation = savedState?.curvatureVariation ?? DEFAULT_CURVATURE_VARIATION;
   let spacingVariation = savedState?.spacingVariation ?? DEFAULT_SPACING_VARIATION;
   let thicknessVariation = savedState?.thicknessVariation ?? DEFAULT_THICKNESS_VARIATION;
   
@@ -101,6 +107,7 @@
   let cachedFrequencyVariations: number[] = [];
   let cachedPeriodVariations: number[] = [];
   let cachedRotationVariations: number[] = [];
+  let cachedCurvatureVariations: number[] = [];
   let cachedSpacingVariations: number[] = [];
   let cachedThicknessVariations: number[] = [];
   
@@ -149,11 +156,11 @@
 
   // Check if current config has unsaved changes
   $: currentWaveConfigString = JSON.stringify({
-    amplitude, wavelength, frequency, period, rotation, spacing, thickness, taper, waveCount,
+    amplitude, wavelength, frequency, period, rotation, curvature, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
     waveColor, backgroundColor,
     baseAmplitudes,
-    amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, spacingVariation, thicknessVariation
+    amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, curvatureVariation, spacingVariation, thicknessVariation
   });
   $: hasUnsavedChanges = activeWaveId !== null && savedWaveSnapshot !== null && currentWaveConfigString !== savedWaveSnapshot;
 
@@ -165,8 +172,9 @@
       cachedFrequencyVariations = generateCachedVariations(waveCount, frequencyVariation, FREQUENCY_RANGE.min, FREQUENCY_RANGE.max, variationSeed + 1000);
       cachedPeriodVariations = generateCachedVariations(waveCount, periodVariation, PERIOD_RANGE.min, PERIOD_RANGE.max, variationSeed + 2000);
       cachedRotationVariations = generateCachedVariations(waveCount, rotationVariation, ROTATION_RANGE.min, ROTATION_RANGE.max, variationSeed + 3000);
-      cachedSpacingVariations = generateCachedVariations(waveCount, spacingVariation, -SPACING_JITTER_MAX_FRACTION, SPACING_JITTER_MAX_FRACTION, variationSeed + 4000);
-      cachedThicknessVariations = generateCachedVariations(waveCount, thicknessVariation, THICKNESS_RANGE.min, THICKNESS_RANGE.max, variationSeed + 5000);
+      cachedCurvatureVariations = generateCachedVariations(waveCount, curvatureVariation, CURVATURE_RANGE.min, CURVATURE_RANGE.max, variationSeed + 4000);
+      cachedSpacingVariations = generateCachedVariations(waveCount, spacingVariation, -SPACING_JITTER_MAX_FRACTION, SPACING_JITTER_MAX_FRACTION, variationSeed + 5000);
+      cachedThicknessVariations = generateCachedVariations(waveCount, thicknessVariation, THICKNESS_RANGE.min, THICKNESS_RANGE.max, variationSeed + 6000);
     }
   }
 
@@ -178,6 +186,7 @@
       frequency,
       period,
       rotation,
+      curvature,
       spacing,
       thickness,
       taper,
@@ -197,6 +206,7 @@
       frequencyVariation,
       periodVariation,
       rotationVariation,
+      curvatureVariation,
       spacingVariation,
       thicknessVariation
     };
@@ -219,6 +229,7 @@
     frequency = DEFAULT_FREQUENCY + (Math.random() - 0.5) * 0.8;
     period = DEFAULT_PERIOD + (Math.random() - 0.5) * 0.08;
     rotation = DEFAULT_ROTATION + (Math.random() - 0.5) * 120;
+    curvature = randomSliderValue(CURVATURE_RANGE);
     spacing = DEFAULT_SPACING + (Math.random() - 0.5) * 1.0;
     thickness = randomSliderValue(THICKNESS_RANGE);
     taper = Math.random() * TAPER_RANGE.max;
@@ -232,6 +243,7 @@
     frequency = DEFAULT_FREQUENCY;
     period = DEFAULT_PERIOD;
     rotation = DEFAULT_ROTATION;
+    curvature = DEFAULT_CURVATURE;
     spacing = DEFAULT_SPACING;
     thickness = DEFAULT_THICKNESS;
     taper = DEFAULT_TAPER;
@@ -241,6 +253,7 @@
     frequencyVariation = DEFAULT_FREQUENCY_VARIATION;
     periodVariation = DEFAULT_PERIOD_VARIATION;
     rotationVariation = DEFAULT_ROTATION_VARIATION;
+    curvatureVariation = DEFAULT_CURVATURE_VARIATION;
     spacingVariation = DEFAULT_SPACING_VARIATION;
     thicknessVariation = DEFAULT_THICKNESS_VARIATION;
     ampToggle = DEFAULT_TOGGLES.amplitude;
@@ -257,11 +270,11 @@
 
   // Helper to create config from current state
   const getCurrentConfig = (): WaveConfig => ({
-    amplitude, wavelength, frequency, period, rotation, spacing, thickness, taper, waveCount,
+    amplitude, wavelength, frequency, period, rotation, curvature, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
     waveColor, backgroundColor,
     baseAmplitudes,
-    amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, spacingVariation, thicknessVariation
+    amplitudeVariation, wavelengthVariation, frequencyVariation, periodVariation, rotationVariation, curvatureVariation, spacingVariation, thicknessVariation
   });
 
   // Helper to apply config to current state
@@ -271,6 +284,7 @@
     frequency = config.frequency;
     period = config.period;
     rotation = config.rotation ?? DEFAULT_ROTATION;
+    curvature = config.curvature ?? DEFAULT_CURVATURE;
     spacing = config.spacing;
     thickness = config.thickness ?? DEFAULT_THICKNESS;
     taper = config.taper ?? DEFAULT_TAPER;
@@ -290,6 +304,7 @@
     frequencyVariation = config.frequencyVariation ?? DEFAULT_FREQUENCY_VARIATION;
     periodVariation = config.periodVariation ?? DEFAULT_PERIOD_VARIATION;
     rotationVariation = config.rotationVariation ?? DEFAULT_ROTATION_VARIATION;
+    curvatureVariation = config.curvatureVariation ?? DEFAULT_CURVATURE_VARIATION;
     spacingVariation = config.spacingVariation ?? DEFAULT_SPACING_VARIATION;
     thicknessVariation = config.thicknessVariation ?? DEFAULT_THICKNESS_VARIATION;
   };
@@ -328,6 +343,10 @@
     rotationVariation = DEFAULT_ROTATION_VARIATION;
   }
 
+  function resetCurvatureVariation() {
+    curvatureVariation = DEFAULT_CURVATURE_VARIATION;
+  }
+
   function resetSpacingVariation() {
     spacingVariation = DEFAULT_SPACING_VARIATION;
   }
@@ -346,6 +365,7 @@
       frequency,
       period,
       rotation,
+      curvature,
       spacing,
       thickness,
       taper,
@@ -356,6 +376,7 @@
       cachedFrequencyVariations,
       cachedPeriodVariations,
       cachedRotationVariations,
+      cachedCurvatureVariations,
       cachedSpacingVariations,
       cachedThicknessVariations,
       periodPhases,
@@ -374,6 +395,7 @@
       frequency,
       period,
       rotation,
+      curvature,
       spacing,
       thickness,
       taper,
@@ -383,6 +405,7 @@
       cachedFrequencyVariations: [...cachedFrequencyVariations],
       cachedPeriodVariations: [...cachedPeriodVariations],
       cachedRotationVariations: [...cachedRotationVariations],
+      cachedCurvatureVariations: [...cachedCurvatureVariations],
       cachedSpacingVariations: [...cachedSpacingVariations],
       cachedThicknessVariations: [...cachedThicknessVariations],
       vertexStep: CANVAS_SETTINGS.vertexStep
@@ -412,6 +435,7 @@
       () => frequency,
       () => period,
       () => rotation,
+      () => curvature,
       () => spacing,
       () => thickness,
       () => taper,
@@ -423,6 +447,7 @@
       () => cachedFrequencyVariations,
       () => cachedPeriodVariations,
       () => cachedRotationVariations,
+      () => cachedCurvatureVariations,
       () => cachedSpacingVariations,
       () => cachedThicknessVariations,
       (value) => { periodPhases = value; }
@@ -469,6 +494,7 @@
     bind:frequency
     bind:period
     bind:rotation
+    bind:curvature
     bind:spacing
     bind:thickness
     bind:taper
@@ -492,6 +518,7 @@
     onResetFrequency={() => frequency = resetFrequencyValue()}
     onResetPeriod={() => period = resetPeriodValue()}
     onResetRotation={() => rotation = resetRotationValue()}
+    onResetCurvature={() => curvature = resetCurvatureValue()}
     onResetSpacing={() => spacing = resetSpacingValue()}
     onResetThickness={() => thickness = resetThicknessValue()}
     onResetTaper={() => taper = resetTaperValue()}
@@ -503,6 +530,7 @@
     bind:frequencyVariation
     bind:periodVariation
     bind:rotationVariation
+    bind:curvatureVariation
     bind:spacingVariation
     bind:thicknessVariation
     onResetAmplitudeVariation={resetAmplitudeVariation}
@@ -510,6 +538,7 @@
     onResetFrequencyVariation={resetFrequencyVariation}
     onResetPeriodVariation={resetPeriodVariation}
     onResetRotationVariation={resetRotationVariation}
+    onResetCurvatureVariation={resetCurvatureVariation}
     onResetSpacingVariation={resetSpacingVariation}
     onResetThicknessVariation={resetThicknessVariation}
     bind:waveColor

@@ -1,5 +1,7 @@
 import {
   DEFAULT_BACKGROUND_COLOR,
+  DEFAULT_CURVATURE,
+  DEFAULT_CURVATURE_VARIATION,
   DEFAULT_TAPER,
   DEFAULT_THICKNESS,
   DEFAULT_THICKNESS_VARIATION,
@@ -12,6 +14,7 @@ export interface WaveConfig {
   frequency: number;
   period: number;
   rotation?: number;
+  curvature?: number;
   spacing: number;
   thickness?: number;
   taper?: number;
@@ -31,6 +34,7 @@ export interface WaveConfig {
   frequencyVariation?: number;
   periodVariation?: number;
   rotationVariation?: number;
+  curvatureVariation?: number;
   spacingVariation?: number;
   thicknessVariation?: number;
 }
@@ -57,10 +61,12 @@ export function generateWaveId(config: WaveConfig): string {
     config.frequency,
     config.period,
     config.rotation ?? 0,
+    config.curvature ?? DEFAULT_CURVATURE,
     config.spacing,
     config.thickness ?? DEFAULT_THICKNESS,
     config.taper ?? DEFAULT_TAPER,
     config.thicknessVariation ?? DEFAULT_THICKNESS_VARIATION,
+    config.curvatureVariation ?? DEFAULT_CURVATURE_VARIATION,
     config.waveColor ?? DEFAULT_WAVE_COLOR,
     config.backgroundColor ?? DEFAULT_BACKGROUND_COLOR,
     config.waveCount,
@@ -132,6 +138,7 @@ export function normalizeWaveConfig(config: WaveConfig): WaveConfig {
     frequency: config.frequency,
     period: config.period,
     rotation: config.rotation,
+    curvature: config.curvature,
     spacing: config.spacing,
     thickness: config.thickness,
     taper: config.taper,
@@ -151,6 +158,7 @@ export function normalizeWaveConfig(config: WaveConfig): WaveConfig {
     frequencyVariation: config.frequencyVariation,
     periodVariation: config.periodVariation,
     rotationVariation: config.rotationVariation,
+    curvatureVariation: config.curvatureVariation,
     spacingVariation: config.spacingVariation,
     thicknessVariation: config.thicknessVariation
   };

@@ -7,6 +7,7 @@ import {
   DEFAULT_FREQUENCY,
   DEFAULT_PERIOD,
   DEFAULT_ROTATION,
+  DEFAULT_CURVATURE,
   DEFAULT_SPACING,
   DEFAULT_THICKNESS,
   DEFAULT_TAPER,
@@ -19,6 +20,7 @@ import {
 } from './constants';
 import {
   rotatePoint,
+  getCurvatureOffset,
   getTaperAmount,
   getMaxTaperMultiplier,
   clampThickness,
@@ -103,6 +105,10 @@ export function resetRotation(): number {
   return DEFAULT_ROTATION;
 }
 
+export function resetCurvature(): number {
+  return DEFAULT_CURVATURE;
+}
+
 export function resetSpacing(): number {
   return DEFAULT_SPACING;
 }
@@ -137,6 +143,8 @@ function drawVariableWidthWaveP5(
   wavelength: number,
   offset: number,
   frequency: number,
+  curvature: number,
+  renderRadius: number,
   thickness: number,
   taper: number,
   phase: number,
@@ -154,6 +162,8 @@ function drawVariableWidthWaveP5(
     wavelength,
     offset,
     frequency,
+    curvature,
+    renderRadius,
     thickness,
     taper,
     phase,
@@ -184,6 +194,7 @@ export function createWaveSketch(
   getFrequency: () => number,
   getPeriod: () => number,
   getRotation: () => number,
+  getCurvature: () => number,
   getSpacing: () => number,
   getThickness: () => number,
   getTaper: () => number,
@@ -195,6 +206,7 @@ export function createWaveSketch(
   getCachedFrequencyVariations: () => number[] = () => [],
   getCachedPeriodVariations: () => number[] = () => [],
   getCachedRotationVariations: () => number[] = () => [],
+  getCachedCurvatureVariations: () => number[] = () => [],
   getCachedSpacingVariations: () => number[] = () => [],
   getCachedThicknessVariations: () => number[] = () => [],
   setPeriodPhases: (value: number[]) => void = () => {}
@@ -221,6 +233,7 @@ export function createWaveSketch(
       const baseFrequency = getFrequency();
       const basePeriod = getPeriod();
       const baseRotation = getRotation();
+      const baseCurvature = getCurvature();
       const baseSpacing = getSpacing();
       const baseThickness = getThickness();
       const taper = getTaperAmount(getTaper());
@@ -230,6 +243,7 @@ export function createWaveSketch(
       const cachedFrequencyVariations = getCachedFrequencyVariations();
       const cachedPeriodVariations = getCachedPeriodVariations();
       const cachedRotationVariations = getCachedRotationVariations();
+      const cachedCurvatureVariations = getCachedCurvatureVariations();
       const cachedSpacingVariations = getCachedSpacingVariations();
       const cachedThicknessVariations = getCachedThicknessVariations();
 
@@ -292,6 +306,7 @@ export function createWaveSketch(
         const waveWavelength = baseWavelength + (cachedWavelengthVariations[idx] ?? 0);
         const waveFrequency = baseFrequency + (cachedFrequencyVariations[idx] ?? 0);
         const waveRotation = baseRotation + (cachedRotationVariations[idx] ?? 0);
+        const waveCurvature = baseCurvature + (cachedCurvatureVariations[idx] ?? 0);
         const waveThickness = clampThickness(
           baseThickness + (cachedThicknessVariations[idx] ?? 0)
         );
@@ -318,6 +333,8 @@ export function createWaveSketch(
             waveWavelength,
             wavePhase,
             waveFrequency,
+            waveCurvature,
+            coverRadius,
             waveThickness,
             taper,
             idx * 0.85,
@@ -330,7 +347,8 @@ export function createWaveSketch(
           p.strokeWeight(waveThickness);
           p.beginShape();
           for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += CANVAS_SETTINGS.vertexStep) {
-            const waveX = x + p.sin(y * waveWavelength + wavePhase + waveFrequency) * amplitude;
+            const waveX = x + getCurvatureOffset(y, centerY, coverRadius, waveCurvature) +
+              p.sin(y * waveWavelength + wavePhase + waveFrequency) * amplitude;
             const rotatedPoint = rotatePoint(waveX, y, centerX, centerY, rotationCos, rotationSin);
             p.vertex(rotatedPoint.x, rotatedPoint.y);
           }
@@ -362,6 +380,7 @@ export function renderWaveToCanvas(
   frequency: number,
   period: number,
   rotation: number,
+  curvature: number,
   spacing: number,
   thickness: number,
   taper: number,
@@ -372,6 +391,7 @@ export function renderWaveToCanvas(
   cachedFrequencyVariations: number[],
   cachedPeriodVariations: number[],
   cachedRotationVariations: number[],
+  cachedCurvatureVariations: number[],
   cachedSpacingVariations: number[],
   cachedThicknessVariations: number[],
   periodPhases: number[] = [],
@@ -443,6 +463,7 @@ export function renderWaveToCanvas(
       const waveWavelength = wavelength + (cachedWavelengthVariations[idx] ?? 0);
       const waveFrequency = frequency + (cachedFrequencyVariations[idx] ?? 0);
       const waveRotation = rotation + (cachedRotationVariations[idx] ?? 0);
+      const waveCurvature = curvature + (cachedCurvatureVariations[idx] ?? 0);
       const waveThickness = clampThickness(
         thickness + (cachedThicknessVariations[idx] ?? 0)
       ) * avgScale;
@@ -467,6 +488,8 @@ export function renderWaveToCanvas(
           waveWavelength,
           wavePhase,
           waveFrequency,
+          waveCurvature,
+          coverRadius,
           waveThickness,
           taperAmount,
           idx * 0.85,
@@ -480,7 +503,8 @@ export function renderWaveToCanvas(
         ctx.beginPath();
         let first = true;
         for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += scaledVertexStep) {
-          const waveX = x + Math.sin(y * waveWavelength + wavePhase + waveFrequency) * scaledAmplitude;
+          const waveX = x + getCurvatureOffset(y, centerY, coverRadius, waveCurvature) +
+            Math.sin(y * waveWavelength + wavePhase + waveFrequency) * scaledAmplitude;
           const rotatedPoint = rotatePoint(waveX, y, centerX, centerY, rotationCos, rotationSin);
           if (first) {
             ctx.moveTo(rotatedPoint.x, rotatedPoint.y);

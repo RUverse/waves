@@ -16,6 +16,7 @@ export interface WaveState {
   frequency: number;
   period: number;
   rotation: number;
+  curvature: number;
   spacing: number;
   thickness: number;
   taper: number;
@@ -35,6 +36,7 @@ export interface WaveState {
   frequencyVariation?: number;
   periodVariation?: number;
   rotationVariation?: number;
+  curvatureVariation?: number;
   spacingVariation?: number;
   thicknessVariation?: number;
 }

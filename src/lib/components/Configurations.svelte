@@ -6,6 +6,7 @@
     FREQUENCY_RANGE,
     PERIOD_RANGE,
     ROTATION_RANGE,
+    CURVATURE_RANGE,
     SPACING_RANGE,
     THICKNESS_RANGE,
     TAPER_RANGE,
@@ -15,6 +16,7 @@
     FREQUENCY_VARIATION_RANGE,
     PERIOD_VARIATION_RANGE,
     ROTATION_VARIATION_RANGE,
+    CURVATURE_VARIATION_RANGE,
     SPACING_VARIATION_RANGE,
     THICKNESS_VARIATION_RANGE
   } from '$lib/constants';
@@ -24,6 +26,7 @@
   export let frequency: number;
   export let period: number;
   export let rotation: number;
+  export let curvature: number;
   export let spacing: number;
   export let thickness: number;
   export let taper: number;
@@ -34,6 +37,7 @@
   export let onResetFrequency: () => void;
   export let onResetPeriod: () => void;
   export let onResetRotation: () => void;
+  export let onResetCurvature: () => void;
   export let onResetSpacing: () => void;
   export let onResetThickness: () => void;
   export let onResetTaper: () => void;
@@ -43,6 +47,7 @@
   export let frequencyVariation: number;
   export let periodVariation: number;
   export let rotationVariation: number;
+  export let curvatureVariation: number;
   export let spacingVariation: number;
   export let thicknessVariation: number;
   export let onResetAmplitudeVariation: () => void;
@@ -50,6 +55,7 @@
   export let onResetFrequencyVariation: () => void;
   export let onResetPeriodVariation: () => void;
   export let onResetRotationVariation: () => void;
+  export let onResetCurvatureVariation: () => void;
   export let onResetSpacingVariation: () => void;
   export let onResetThicknessVariation: () => void;
 </script>
@@ -155,6 +161,24 @@
     variationMax={ROTATION_VARIATION_RANGE.max}
     variationStep={ROTATION_VARIATION_RANGE.step}
     onResetVariation={onResetRotationVariation}
+  />
+
+  <SettingRow
+    label="Curvature"
+    bind:value={curvature}
+    min={CURVATURE_RANGE.min}
+    max={CURVATURE_RANGE.max}
+    step={CURVATURE_RANGE.step}
+    defaultValue={CURVATURE_RANGE.default}
+    decimals={2}
+    onReset={onResetCurvature}
+    {nerdMode}
+    hasVariation
+    bind:variation={curvatureVariation}
+    variationMin={CURVATURE_VARIATION_RANGE.min}
+    variationMax={CURVATURE_VARIATION_RANGE.max}
+    variationStep={CURVATURE_VARIATION_RANGE.step}
+    onResetVariation={onResetCurvatureVariation}
   />
 
   <SettingRow
