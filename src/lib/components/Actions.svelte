@@ -4,14 +4,12 @@
   export let onReset: () => void;
   export let onResetConfig: () => void;
   export let onOpenExport: () => void;
-  export let nerdMode: boolean;
-  export let onToggleNerdMode: (value: boolean) => void;
 
   const iconBtnClass =
     'glass-btn flex flex-col items-center justify-center gap-0.5 w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg';
 </script>
 
-<!-- Top action bar: Reset + Shuffle (left), Core/Pro switch (center), Share (right) -->
+<!-- Top action bar: Reset + Shuffle (left), Share (right) -->
 <div class="flex items-center justify-between gap-2">
   <div class="flex items-center gap-2">
     <Button onclick={onResetConfig} variant="ghost" class={iconBtnClass} title="Reset all settings to defaults">
@@ -31,26 +29,6 @@
       </svg>
       <span class="text-[10px] leading-none font-light opacity-75">Shuffle</span>
     </Button>
-  </div>
-
-  <!-- Core / Pro segmented switch -->
-  <div class="flex items-center rounded-full border border-white/20 bg-white/5 p-0.5" role="radiogroup" aria-label="Mode">
-    <button
-      role="radio"
-      aria-checked={!nerdMode}
-      onclick={() => onToggleNerdMode(false)}
-      class="px-2 sm:px-2.5 py-1 rounded-full text-xs font-medium transition-colors {!nerdMode ? 'bg-white/25 text-white' : 'text-white/55 hover:text-white'}"
-    >
-      Core
-    </button>
-    <button
-      role="radio"
-      aria-checked={nerdMode}
-      onclick={() => onToggleNerdMode(true)}
-      class="px-2 sm:px-2.5 py-1 rounded-full text-xs font-medium transition-colors {nerdMode ? 'bg-white/25 text-white' : 'text-white/55 hover:text-white'}"
-    >
-      Pro
-    </button>
   </div>
 
   <Button onclick={onOpenExport} variant="ghost" class={iconBtnClass} title="Share / export">
