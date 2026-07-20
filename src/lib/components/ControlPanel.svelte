@@ -116,7 +116,12 @@
     >
       <!-- Left Sidebar: saved configs + save actions, collapse pinned at bottom -->
       <div class="flex flex-col gap-2 w-16 sm:w-40 shrink-0">
-        <h2 class="text-white/60 text-xs font-semibold tracking-[0.2em] uppercase px-1 py-1">waves</h2>
+        <header class="px-1 py-1">
+          <h1 class="text-white/70 text-xs font-semibold tracking-[0.2em] uppercase">Waves</h1>
+          <p class="hidden sm:block mt-1.5 text-[10px] leading-relaxed text-white/45">
+            Generate animated wave patterns and embed them in your website.
+          </p>
+        </header>
 
         <div class="flex flex-col gap-2 min-h-0 overflow-y-auto">
           <ConfigTabs
@@ -169,7 +174,7 @@
 
         <!-- Compact segmented switch: either half toggles the mode. -->
         <div
-          class="flex w-full items-center rounded-lg border border-white/20 bg-white/5 p-0.5 sm:hidden"
+          class="flex w-full items-center rounded-lg border border-white/10 bg-white/5 p-0.5 sm:hidden"
           role="radiogroup"
           aria-label="Mode"
         >
@@ -197,7 +202,7 @@
 
         <!-- Desktop Core / Pro segmented switch -->
         <div
-          class="hidden w-full items-center rounded-lg border border-white/20 bg-white/5 p-0.5 sm:flex"
+          class="hidden w-full items-center rounded-lg border border-white/10 bg-white/5 p-0.5 sm:flex"
           role="radiogroup"
           aria-label="Mode"
         >
@@ -223,13 +228,13 @@
           onclick={onTogglePanel}
           variant="ghost"
           class="glass-btn flex items-center justify-center sm:justify-start gap-2.5 w-full h-10 px-0 sm:px-3 rounded-lg text-sm font-medium"
-          title="Collapse panel"
+          title="Hide UI"
         >
           <!-- Chevron Left Icon -->
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <polyline points="13,5 8,10 13,15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
           </svg>
-          <span class="hidden sm:inline">Collapse</span>
+          <span class="hidden sm:inline">Hide UI</span>
         </Button>
       </div>
 
