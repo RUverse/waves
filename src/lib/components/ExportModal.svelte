@@ -41,6 +41,7 @@
   let copied = false;
   let copyFailed = false;
   let copyTimer: ReturnType<typeof setTimeout> | null = null;
+  let previewResizeFrame: number | null = null;
 
   $: isCodeTab = activeTab === 'embed';
 
@@ -269,25 +270,35 @@ ${sn}
     if (e.key === 'Escape') onClose();
   }
 
+  function handleResize() {
+    if (!isOpen) return;
+    if (previewResizeFrame !== null) cancelAnimationFrame(previewResizeFrame);
+    previewResizeFrame = requestAnimationFrame(() => {
+      previewResizeFrame = null;
+      updatePreview();
+    });
+  }
+
   onDestroy(() => {
     clearPreview();
     if (copyTimer) clearTimeout(copyTimer);
+    if (previewResizeFrame !== null) cancelAnimationFrame(previewResizeFrame);
   });
 </script>
 
-<svelte:window on:keydown={isOpen ? handleKeydown : undefined} />
+<svelte:window on:keydown={isOpen ? handleKeydown : undefined} on:resize={handleResize} />
 
 {#if isOpen}
   <!-- Modal backdrop -->
   <div
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
     onclick={onClose}
     role="presentation"
   >
     <!-- Modal content - black tinted liquid glass -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
-      class="glass-surface rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-screen overflow-y-auto"
+      class="glass-surface rounded-2xl p-4 sm:p-6 w-full max-w-2xl max-h-full overflow-y-auto"
       onclick={(e) => e.stopPropagation()}
       role="dialog"
       aria-modal="true"
@@ -311,9 +322,9 @@ ${sn}
         </button>
       </div>
 
-      <div class="grid grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Left Column: Selection and Inputs -->
-        <div class="col-span-2 space-y-6">
+        <div class="min-w-0 md:col-span-2 space-y-6">
           {#if activeTab === 'image'}
             <!-- Resolution Preset Selection -->
             <fieldset>
@@ -487,7 +498,7 @@ ${sn}
         </div>
 
         <!-- Right Column: Preview -->
-        <div class="col-span-1 flex flex-col">
+        <div class="min-w-0 md:col-span-1 flex flex-col">
           <span class="text-white text-sm font-medium block mb-3">Preview</span>
           <div
             id="preview"
@@ -509,12 +520,12 @@ ${sn}
       </div>
 
       <!-- Buttons -->
-      <div class="flex gap-3 justify-end mt-8">
+      <div class="flex flex-col sm:flex-row gap-3 justify-end mt-8">
         <Button
           onclick={onClose}
           disabled={isExporting}
           variant="ghost"
-          class="glass-btn h-9 px-5 rounded-lg text-sm font-medium"
+          class="glass-btn h-9 w-full sm:w-auto px-5 rounded-lg text-sm font-medium whitespace-nowrap"
         >
           {isCodeTab ? 'Close' : 'Cancel'}
         </Button>
@@ -523,7 +534,7 @@ ${sn}
             onclick={handleExport}
             disabled={isExporting || !onRenderWave}
             variant="ghost"
-            class="glass-btn is-active h-9 px-5 rounded-lg text-sm font-medium"
+            class="glass-btn is-active h-9 w-full sm:w-auto px-5 rounded-lg text-sm font-medium whitespace-nowrap"
           >
             {isExporting ? 'Exporting...' : 'Export PNG'}
           </Button>
@@ -532,7 +543,7 @@ ${sn}
             onclick={handleDownload}
             disabled={!onGetEmbedConfig || !snippet}
             variant="ghost"
-            class="glass-btn h-9 px-5 rounded-lg text-sm font-medium"
+            class="glass-btn h-9 w-full sm:w-auto px-5 rounded-lg text-sm font-medium whitespace-nowrap"
           >
             {embedFormat === 'react' ? 'Download .jsx' : 'Download .html'}
           </Button>
@@ -540,7 +551,7 @@ ${sn}
             onclick={handleCopy}
             disabled={!onGetEmbedConfig || !snippet}
             variant="ghost"
-            class="glass-btn is-active h-9 px-5 rounded-lg text-sm font-medium"
+            class="glass-btn is-active h-9 w-full sm:w-auto px-5 rounded-lg text-sm font-medium whitespace-nowrap"
           >
             {copied ? 'Copied!' : copyFailed ? 'Press Ctrl+C' : 'Copy code'}
           </Button>
