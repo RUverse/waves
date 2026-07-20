@@ -83,18 +83,18 @@
 
 <div>
   <!-- Main row -->
-  <div class="flex items-center space-x-2">
+  <div class="flex items-center gap-2">
     <Button
       onclick={onReset}
       disabled={atDefault}
       variant="ghost"
-      class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center shrink-0"
+      class="glass-btn w-7 h-7 p-0 rounded-lg flex items-center justify-center shrink-0"
       title={atDefault ? `${label} is at default` : `Reset ${label.toLowerCase()}`}
     >
       <ResetIcon />
     </Button>
-    <Label class="text-white w-16 sm:w-24 shrink-0">{label}</Label>
-    <Slider bind:value {min} {max} {step} class="w-20 sm:w-32" />
+    <Label class="text-white text-xs sm:text-sm w-18 sm:w-24 shrink-0">{label}</Label>
+    <Slider bind:value {min} {max} {step} class="flex-1 min-w-8 sm:flex-none sm:w-32" />
 
     {#if nerdMode}
       <input
@@ -112,7 +112,7 @@
       <Button
         onclick={toggleVar}
         variant="ghost"
-        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center shrink-0"
+        class="glass-btn w-7 h-7 p-0 rounded-lg flex items-center justify-center shrink-0 ml-auto"
         title={showVar ? `Remove ${label.toLowerCase()} variance` : `Add ${label.toLowerCase()} variance`}
       >
         {#if showVar}
@@ -132,7 +132,7 @@
 
   <!-- Variation row -->
   {#if hasVariation && showVar}
-    <div class="flex items-center space-x-2 ml-8 mt-1">
+    <div class="flex items-center gap-2 ml-9 mt-1">
       <Button
         onclick={onResetVariation}
         disabled={varAtDefault}
@@ -142,13 +142,13 @@
       >
         <ResetIcon />
       </Button>
-      <Label class="text-white/70 text-xs w-10 sm:w-16 shrink-0">Var</Label>
+      <Label class="text-white/70 text-xs w-16 shrink-0">Variation</Label>
       <Slider
         bind:value={variation}
         min={variationMin}
         max={variationMax}
         step={variationStep}
-        class="w-20 sm:w-32"
+        class="flex-1 min-w-8 sm:flex-none sm:w-32"
       />
       {#if nerdMode}
         <input
@@ -191,5 +191,12 @@
   .setting-input {
     -moz-appearance: textfield;
     appearance: textfield;
+  }
+  /* Narrower value inputs on small screens so rows always fit the viewport */
+  @media (max-width: 639px) {
+    .setting-input {
+      width: 2.75rem;
+      font-size: 0.6875rem;
+    }
   }
 </style>
