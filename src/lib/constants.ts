@@ -4,6 +4,7 @@ export const DEFAULT_WAVELENGTH = 0.02;
 export const DEFAULT_FREQUENCY = 0.5;
 export const DEFAULT_PERIOD = 0.05;
 export const DEFAULT_ROTATION = 0;
+export const DEFAULT_CURVATURE = 0;
 
 // Wave parameter ranges for sliders
 export const AMPLITUDE_RANGE = {
@@ -39,6 +40,16 @@ export const ROTATION_RANGE = {
   max: 180,
   step: 1,
   default: DEFAULT_ROTATION
+};
+
+// Dimensionless sideways bend of the wave centerline. At ±1, the centerline
+// is displaced by one rendered vertical radius at its outermost sampled
+// points. Negative values bend in the opposite direction.
+export const CURVATURE_RANGE = {
+  min: -1,
+  max: 1,
+  step: 0.01,
+  default: DEFAULT_CURVATURE
 };
 
 // Absolute gap (in px) between adjacent waves when the spacing multiplier is
@@ -140,6 +151,7 @@ export const DEFAULT_WAVELENGTH_VARIATION = 0;
 export const DEFAULT_FREQUENCY_VARIATION = 0;
 export const DEFAULT_PERIOD_VARIATION = 0;
 export const DEFAULT_ROTATION_VARIATION = 0;
+export const DEFAULT_CURVATURE_VARIATION = 0;
 export const DEFAULT_SPACING_VARIATION = 0;
 export const DEFAULT_THICKNESS_VARIATION = 0;
 
@@ -177,6 +189,13 @@ export const ROTATION_VARIATION_RANGE = {
   max: 1.0,
   step: 0.01,
   default: DEFAULT_ROTATION_VARIATION
+};
+
+export const CURVATURE_VARIATION_RANGE = {
+  min: 0,
+  max: 1.0,
+  step: 0.01,
+  default: DEFAULT_CURVATURE_VARIATION
 };
 
 export const SPACING_VARIATION_RANGE = {

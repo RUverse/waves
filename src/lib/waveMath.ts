@@ -58,6 +58,23 @@ export function getMaxTaperMultiplier(taper: number): number {
   return 1 + getTaperAmount(taper);
 }
 
+/**
+ * Returns the sideways displacement of a wave's centerline at `y`.
+ * Curvature is dimensionless: 0 is straight, and its sign controls the bend
+ * direction. Normalizing by the render radius keeps the control responsive at
+ * different canvas sizes while preserving the same overall shape.
+ */
+export function getCurvatureOffset(
+  y: number,
+  centerY: number,
+  renderRadius: number,
+  curvature: number
+): number {
+  const radius = Math.max(Math.abs(renderRadius), 1);
+  const dy = y - centerY;
+  return curvature * dy * dy / radius;
+}
+
 export function createVariableWidthWavePoints(
   x: number,
   yStart: number,
@@ -67,6 +84,8 @@ export function createVariableWidthWavePoints(
   wavelength: number,
   offset: number,
   frequency: number,
+  curvature: number,
+  renderRadius: number,
   thickness: number,
   taper: number,
   phase: number,
@@ -82,8 +101,11 @@ export function createVariableWidthWavePoints(
 
   const addPoint = (y: number) => {
     const angle = y * wavelength + offset + frequency;
-    const waveX = x + Math.sin(angle) * amplitude;
-    const dxDy = Math.cos(angle) * amplitude * wavelength;
+    const waveX = x + getCurvatureOffset(y, centerY, renderRadius, curvature) +
+      Math.sin(angle) * amplitude;
+    const curvatureSlope = 2 * curvature * (y - centerY) /
+      Math.max(Math.abs(renderRadius), 1);
+    const dxDy = curvatureSlope + Math.cos(angle) * amplitude * wavelength;
     const normalLength = Math.hypot(1, dxDy);
     const normalX = 1 / normalLength;
     const normalY = -dxDy / normalLength;
@@ -131,6 +153,8 @@ export function drawVariableWidthWaveCanvas(
   wavelength: number,
   offset: number,
   frequency: number,
+  curvature: number,
+  renderRadius: number,
   thickness: number,
   taper: number,
   phase: number,
@@ -148,6 +172,8 @@ export function drawVariableWidthWaveCanvas(
     wavelength,
     offset,
     frequency,
+    curvature,
+    renderRadius,
     thickness,
     taper,
     phase,
@@ -222,6 +248,7 @@ export interface WaveFrameConfig {
   wavelength: number;
   frequency: number;
   rotation: number;
+  curvature?: number;
   spacing: number;
   thickness: number;
   taper: number;
@@ -229,6 +256,7 @@ export interface WaveFrameConfig {
   cachedWavelengthVariations: number[];
   cachedFrequencyVariations: number[];
   cachedRotationVariations: number[];
+  cachedCurvatureVariations?: number[];
   cachedSpacingVariations: number[];
   cachedThicknessVariations: number[];
   vertexStep?: number;
@@ -257,6 +285,7 @@ export function drawWaveFrame(
     wavelength,
     frequency,
     rotation,
+    curvature = 0,
     spacing,
     thickness,
     taper,
@@ -264,6 +293,7 @@ export function drawWaveFrame(
     cachedWavelengthVariations,
     cachedFrequencyVariations,
     cachedRotationVariations,
+    cachedCurvatureVariations = [],
     cachedSpacingVariations,
     cachedThicknessVariations,
     vertexStep = CANVAS_SETTINGS.vertexStep
@@ -302,6 +332,7 @@ export function drawWaveFrame(
     const waveWavelength = wavelength + (cachedWavelengthVariations[idx] ?? 0);
     const waveFrequency = frequency + (cachedFrequencyVariations[idx] ?? 0);
     const waveRotation = rotation + (cachedRotationVariations[idx] ?? 0);
+    const waveCurvature = curvature + (cachedCurvatureVariations[idx] ?? 0);
     const waveThickness = clampThickness(
       thickness + (cachedThicknessVariations[idx] ?? 0)
     );
@@ -326,6 +357,8 @@ export function drawWaveFrame(
         waveWavelength,
         wavePhase,
         waveFrequency,
+        waveCurvature,
+        coverRadius,
         waveThickness,
         taperAmount,
         idx * 0.85,
@@ -339,7 +372,8 @@ export function drawWaveFrame(
       ctx.beginPath();
       let first = true;
       for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += vertexStep) {
-        const waveX = x + Math.sin(y * waveWavelength + wavePhase + waveFrequency) * amplitude;
+        const waveX = x + getCurvatureOffset(y, centerY, coverRadius, waveCurvature) +
+          Math.sin(y * waveWavelength + wavePhase + waveFrequency) * amplitude;
         const rotatedPoint = rotatePoint(waveX, y, centerX, centerY, rotationCos, rotationSin);
         if (first) {
           ctx.moveTo(rotatedPoint.x, rotatedPoint.y);

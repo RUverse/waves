@@ -34,6 +34,7 @@
   export let frequency: number;
   export let period: number;
   export let rotation: number;
+  export let curvature: number;
   export let spacing: number;
   export let thickness: number;
   export let taper: number;
@@ -52,6 +53,7 @@
   export let onResetFrequency: () => void;
   export let onResetPeriod: () => void;
   export let onResetRotation: () => void;
+  export let onResetCurvature: () => void;
   export let onResetSpacing: () => void;
   export let onResetThickness: () => void;
   export let onResetTaper: () => void;
@@ -75,6 +77,7 @@
   export let frequencyVariation: number;
   export let periodVariation: number;
   export let rotationVariation: number;
+  export let curvatureVariation: number;
   export let spacingVariation: number;
   export let thicknessVariation: number;
   export let onResetAmplitudeVariation: () => void;
@@ -82,6 +85,7 @@
   export let onResetFrequencyVariation: () => void;
   export let onResetPeriodVariation: () => void;
   export let onResetRotationVariation: () => void;
+  export let onResetCurvatureVariation: () => void;
   export let onResetSpacingVariation: () => void;
   export let onResetThicknessVariation: () => void;
 </script>
@@ -157,6 +161,7 @@
       bind:frequency
       bind:period
       bind:rotation
+      bind:curvature
       bind:spacing
       bind:thickness
       bind:taper
@@ -166,6 +171,7 @@
       bind:frequencyVariation
       bind:periodVariation
       bind:rotationVariation
+      bind:curvatureVariation
       bind:spacingVariation
       bind:thicknessVariation
       {nerdMode}
@@ -174,6 +180,7 @@
       {onResetFrequency}
       {onResetPeriod}
       {onResetRotation}
+      {onResetCurvature}
       {onResetSpacing}
       {onResetThickness}
       {onResetTaper}
@@ -183,6 +190,7 @@
       {onResetFrequencyVariation}
       {onResetPeriodVariation}
       {onResetRotationVariation}
+      {onResetCurvatureVariation}
       {onResetSpacingVariation}
       {onResetThicknessVariation}
     />
