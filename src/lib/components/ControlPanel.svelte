@@ -2,8 +2,6 @@
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import { Button } from '$lib/components/ui/button';
-  import { Label } from '$lib/components/ui/label';
-  import { Slider } from '$lib/components/ui/slider';
   import { ColorPicker } from '$lib/components/ui/color-picker';
   import Actions from './Actions.svelte';
   import ConfigTabs from './ConfigTabs.svelte';
@@ -45,7 +43,6 @@
   export let onSaveConfig: () => void;
   export let onSaveConfigAsNew: () => void;
   export let onTogglePanel: () => void;
-  export let onOpenSettings: () => void;
   export let onOpenExport: () => void;
   export let nerdMode: boolean;
   export let onToggleNerdMode: (value: boolean) => void;
@@ -114,39 +111,15 @@
   <!-- Control Panel -->
   {#if showPanel}
     <div
-      class="control-panel glass-surface flex flex-col rounded-2xl p-3 m-0 gap-3 max-w-[calc(100vw-0.5rem)] max-h-[calc(100dvh-0.5rem)] overflow-y-auto overflow-x-hidden"
+      class="control-panel glass-surface flex flex-row rounded-2xl p-3 m-0 gap-3 w-[calc(100vw-0.5rem)] sm:w-auto max-w-[calc(100vw-0.5rem)] max-h-[calc(100dvh-0.5rem)] overflow-hidden"
       transition:fly={{ x: -24, duration: 260, easing: cubicOut }}
     >
-      <!-- Header -->
-      <h2 class="text-white/60 text-xs font-semibold tracking-[0.2em] uppercase px-1">waves</h2>
+      <!-- Left Sidebar: saved configs + save actions, collapse pinned at bottom -->
+      <div class="flex flex-col gap-2 w-16 sm:w-40 shrink-0">
+        <h2 class="text-white/60 text-xs font-semibold tracking-[0.2em] uppercase px-1 py-1">waves</h2>
 
-      <!-- Main Layout: Actions (Left) and Content (Right) -->
-      <div class="flex flex-row gap-2">
-        <!-- Left Sidebar - Actions Buttons (Vertical) -->
-        <div class="flex flex-col justify-between gap-2 w-11 sm:w-32 shrink-0">
-          <Actions {onReset} {onResetConfig} {onSaveConfig} {onSaveConfigAsNew} {onOpenSettings} {onOpenExport} {activeWaveId} {nerdMode} {onToggleNerdMode} />
-          
-          <!-- Collapse Button (at bottom) -->
-          <Button
-            onclick={onTogglePanel}
-            variant="ghost"
-            class="glass-btn flex items-center justify-center sm:justify-start gap-2.5 w-full h-10 px-0 sm:px-3 rounded-lg text-sm font-medium"
-            title="Collapse panel"
-          >
-            <!-- Chevron Left Icon -->
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <polyline points="13,5 8,10 13,15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </svg>
-            <span class="hidden sm:inline">Collapse</span>
-          </Button>
-        </div>
-
-        <!-- Main Content Area -->
-        <div class="flex flex-col">
-        
-        <!-- Config Tabs -->
-        <div class="mb-2">
-          <ConfigTabs 
+        <div class="flex flex-col gap-2 min-h-0 overflow-y-auto">
+          <ConfigTabs
             waves={savedWaves}
             activeWaveId={activeWaveId}
             {hasUnsavedChanges}
@@ -154,9 +127,68 @@
             onDeleteWave={onDeleteWave}
           />
         </div>
-        
-        <div class="flex flex-col gap-3">
-    
+
+        <div class="flex gap-2">
+          <Button
+            onclick={onSaveConfig}
+            variant="ghost"
+            class="glass-btn flex-1 flex items-center justify-center gap-1.5 h-9 px-1 has-[>svg]:px-1 rounded-lg"
+            title="Save config"
+          >
+            <!-- Save icon -->
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 14H4C3.44772 14 3 13.5523 3 13V3C3 2.44772 3.44772 2 4 2H9L13 6V13C13 13.5523 12.5523 14 12 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 2V6H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6 10H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span class="hidden sm:inline text-[10px] leading-none font-light opacity-75">Save</span>
+          </Button>
+          {#if activeWaveId}
+            <Button
+              onclick={onSaveConfigAsNew}
+              variant="ghost"
+              class="glass-btn flex-1 flex items-center justify-center gap-1.5 h-9 px-1 has-[>svg]:px-1 rounded-lg"
+              title="Save as new config"
+            >
+              <!-- Save as new icon (save with plus) -->
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 14H4C3.44772 14 3 13.5523 3 13V3C3 2.44772 3.44772 2 4 2H9L13 6V13C13 13.5523 12.5523 14 12 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 2V6H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 8V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M6 10H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <span class="hidden sm:flex flex-col items-start gap-1 text-[10px] leading-none font-light opacity-75">
+                <span>Save</span>
+                <span>as new</span>
+              </span>
+            </Button>
+          {/if}
+        </div>
+
+        <div class="flex-1"></div>
+
+        <Button
+          onclick={onTogglePanel}
+          variant="ghost"
+          class="glass-btn flex items-center justify-center sm:justify-start gap-2.5 w-full h-10 px-0 sm:px-3 rounded-lg text-sm font-medium"
+          title="Collapse panel"
+        >
+          <!-- Chevron Left Icon -->
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="13,5 8,10 13,15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+          <span class="hidden sm:inline">Collapse</span>
+        </Button>
+      </div>
+
+      <!-- Divider -->
+      <div class="w-px bg-white/10 self-stretch"></div>
+
+      <!-- Main Content Area -->
+      <div class="flex-1 sm:flex-none min-w-0 flex flex-col gap-3 min-h-0 overflow-y-auto">
+        <!-- Top action bar -->
+        <Actions {onReset} {onResetConfig} {onOpenExport} {nerdMode} {onToggleNerdMode} />
+
     <Configurations
       bind:amplitude
       bind:wavelength
@@ -199,30 +231,28 @@
       {onResetThicknessVariation}
     />
 
-    <!-- Colors row: one reset on the left resets both wave + background -->
-    <div class="flex items-center space-x-2">
-      <Button
-        onclick={resetColors}
-        disabled={colorsAtDefault}
-        variant="ghost"
-        class="glass-btn w-6 h-6 p-0 rounded-md flex items-center justify-center shrink-0"
-        title={colorsAtDefault ? 'Colors are at default' : 'Reset colors'}
-      >
-        <ResetIcon />
-      </Button>
-      <ColorPicker
-        label="Wave"
-        bind:value={waveColor}
-        onChange={(color) => waveColor = color}
-      />
-      <div class="mx-1"></div>
-      <ColorPicker
-        label="Background"
-        bind:value={backgroundColor}
-        onChange={(color) => backgroundColor = color}
-      />
-    </div>
-        </div>
+        <!-- Colors row: one reset on the left resets both wave + background -->
+        <div class="flex items-center gap-2">
+          <Button
+            onclick={resetColors}
+            disabled={colorsAtDefault}
+            variant="ghost"
+            class="glass-btn w-7 h-7 p-0 rounded-lg flex items-center justify-center shrink-0"
+            title={colorsAtDefault ? 'Colors are at default' : 'Reset colors'}
+          >
+            <ResetIcon />
+          </Button>
+          <ColorPicker
+            label="Wave"
+            bind:value={waveColor}
+            onChange={(color) => waveColor = color}
+          />
+          <div class="mx-1"></div>
+          <ColorPicker
+            label="Background"
+            bind:value={backgroundColor}
+            onChange={(color) => backgroundColor = color}
+          />
         </div>
       </div>
     </div>

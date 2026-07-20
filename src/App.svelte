@@ -331,10 +331,6 @@
     thicknessVariation = config.thicknessVariation ?? DEFAULT_THICKNESS_VARIATION;
   };
 
-  function openSettings() {
-    showSettingsModal = true;
-  }
-
   function closeSettings() {
     showSettingsModal = false;
   }
@@ -535,7 +531,6 @@
     onSelectWave={(wave) => applyConfig(waveManagement.selectWave(wave))}
     onDeleteWave={(id) => waveManagement.deleteWave(id)}
     onTogglePanel={togglePanel}
-    onOpenSettings={openSettings}
     onOpenExport={openExport}
     {nerdMode}
     onToggleNerdMode={toggleNerdMode}
