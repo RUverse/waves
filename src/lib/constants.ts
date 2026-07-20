@@ -5,6 +5,7 @@ export const DEFAULT_FREQUENCY = 0.5;
 export const DEFAULT_PERIOD = 0.05;
 export const DEFAULT_ROTATION = 0;
 export const DEFAULT_CURVATURE = 0;
+export const DEFAULT_GLITCH = 0;
 
 // Wave parameter ranges for sliders
 export const AMPLITUDE_RANGE = {
@@ -50,6 +51,14 @@ export const CURVATURE_RANGE = {
   max: 1,
   step: 0.01,
   default: DEFAULT_CURVATURE
+};
+
+// Intensity of the animated, banded horizontal displacement effect.
+export const GLITCH_RANGE = {
+  min: 0,
+  max: 1,
+  step: 0.01,
+  default: DEFAULT_GLITCH
 };
 
 // Absolute gap (in px) between adjacent waves when the spacing multiplier is

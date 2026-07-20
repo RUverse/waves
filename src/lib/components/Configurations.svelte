@@ -7,6 +7,7 @@
     PERIOD_RANGE,
     ROTATION_RANGE,
     CURVATURE_RANGE,
+    GLITCH_RANGE,
     SPACING_RANGE,
     THICKNESS_RANGE,
     TAPER_RANGE,
@@ -27,6 +28,7 @@
   export let period: number;
   export let rotation: number;
   export let curvature: number;
+  export let glitch: number;
   export let spacing: number;
   export let thickness: number;
   export let taper: number;
@@ -38,6 +40,7 @@
   export let onResetPeriod: () => void;
   export let onResetRotation: () => void;
   export let onResetCurvature: () => void;
+  export let onResetGlitch: () => void;
   export let onResetSpacing: () => void;
   export let onResetThickness: () => void;
   export let onResetTaper: () => void;
@@ -163,23 +166,37 @@
     onResetVariation={onResetRotationVariation}
   />
 
-  <SettingRow
-    label="Curvature"
-    bind:value={curvature}
-    min={CURVATURE_RANGE.min}
-    max={CURVATURE_RANGE.max}
-    step={CURVATURE_RANGE.step}
-    defaultValue={CURVATURE_RANGE.default}
-    decimals={2}
-    onReset={onResetCurvature}
-    {nerdMode}
-    hasVariation
-    bind:variation={curvatureVariation}
-    variationMin={CURVATURE_VARIATION_RANGE.min}
-    variationMax={CURVATURE_VARIATION_RANGE.max}
-    variationStep={CURVATURE_VARIATION_RANGE.step}
-    onResetVariation={onResetCurvatureVariation}
-  />
+  {#if nerdMode}
+    <SettingRow
+      label="Curvature"
+      bind:value={curvature}
+      min={CURVATURE_RANGE.min}
+      max={CURVATURE_RANGE.max}
+      step={CURVATURE_RANGE.step}
+      defaultValue={CURVATURE_RANGE.default}
+      decimals={2}
+      onReset={onResetCurvature}
+      {nerdMode}
+      hasVariation
+      bind:variation={curvatureVariation}
+      variationMin={CURVATURE_VARIATION_RANGE.min}
+      variationMax={CURVATURE_VARIATION_RANGE.max}
+      variationStep={CURVATURE_VARIATION_RANGE.step}
+      onResetVariation={onResetCurvatureVariation}
+    />
+
+    <SettingRow
+      label="Glitch"
+      bind:value={glitch}
+      min={GLITCH_RANGE.min}
+      max={GLITCH_RANGE.max}
+      step={GLITCH_RANGE.step}
+      defaultValue={GLITCH_RANGE.default}
+      decimals={2}
+      onReset={onResetGlitch}
+      {nerdMode}
+    />
+  {/if}
 
   <SettingRow
     label="Spacing"

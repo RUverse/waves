@@ -8,6 +8,7 @@ import {
   DEFAULT_PERIOD,
   DEFAULT_ROTATION,
   DEFAULT_CURVATURE,
+  DEFAULT_GLITCH,
   DEFAULT_SPACING,
   DEFAULT_THICKNESS,
   DEFAULT_TAPER,
@@ -21,6 +22,7 @@ import {
 import {
   rotatePoint,
   getCurvatureOffset,
+  applyGlitchToCanvas,
   getTaperAmount,
   getMaxTaperMultiplier,
   clampThickness,
@@ -109,6 +111,10 @@ export function resetCurvature(): number {
   return DEFAULT_CURVATURE;
 }
 
+export function resetGlitch(): number {
+  return DEFAULT_GLITCH;
+}
+
 export function resetSpacing(): number {
   return DEFAULT_SPACING;
 }
@@ -195,6 +201,7 @@ export function createWaveSketch(
   getPeriod: () => number,
   getRotation: () => number,
   getCurvature: () => number,
+  getGlitch: () => number,
   getSpacing: () => number,
   getThickness: () => number,
   getTaper: () => number,
@@ -217,6 +224,7 @@ export function createWaveSketch(
     // period variance drift out of sync over time. Integrated (rather than
     // recomputed from a frame count) so live slider changes never cause jumps.
     const periodPhases: number[] = [];
+    const glitchCanvas = document.createElement('canvas');
 
     p.setup = () => {
       p.createCanvas(p.windowWidth, p.windowHeight);
@@ -234,6 +242,7 @@ export function createWaveSketch(
       const basePeriod = getPeriod();
       const baseRotation = getRotation();
       const baseCurvature = getCurvature();
+      const glitch = getGlitch();
       const baseSpacing = getSpacing();
       const baseThickness = getThickness();
       const taper = getTaperAmount(getTaper());
@@ -356,6 +365,15 @@ export function createWaveSketch(
         }
       }
 
+      applyGlitchToCanvas(
+        p.drawingContext as CanvasRenderingContext2D,
+        p.width,
+        p.height,
+        glitch,
+        offset,
+        glitchCanvas
+      );
+
       setOffset(offset + basePeriod);
     };
 
@@ -381,6 +399,7 @@ export function renderWaveToCanvas(
   period: number,
   rotation: number,
   curvature: number,
+  glitch: number,
   spacing: number,
   thickness: number,
   taper: number,
@@ -516,6 +535,8 @@ export function renderWaveToCanvas(
         ctx.stroke();
       }
     }
+
+    applyGlitchToCanvas(ctx, width, height, glitch, offset);
 
     return canvas;
   } catch (error) {
