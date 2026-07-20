@@ -80,8 +80,15 @@
   function updateImagePreview() {
     if (!onRenderWave) return;
 
-    const containerWidth = previewContainer.offsetWidth;
-    const containerHeight = previewContainer.offsetHeight;
+    // Measure the padding-box content area, NOT offsetWidth/offsetHeight:
+    // sizing the canvas from a measure that includes the padding makes the
+    // content outgrow the box, which re-measures bigger — a feedback loop that
+    // Firefox iterates forever (the box grows taller on every layout pass).
+    const cs = getComputedStyle(previewContainer);
+    const containerWidth = previewContainer.clientWidth -
+      parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const containerHeight = previewContainer.clientHeight -
+      parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
 
     const scale = Math.min(
       containerWidth / currentResolution.width,
@@ -95,8 +102,12 @@
     canvas.height = previewHeight;
     canvas.style.border = '1px solid rgba(255, 255, 255, 0.2)';
     canvas.style.borderRadius = '4px';
-    canvas.style.display = 'block';
-    canvas.style.margin = 'auto';
+    // Absolutely positioned so the preview can never influence the box's own
+    // layout size (the box is sized purely by the flex/grid layout around it).
+    canvas.style.position = 'absolute';
+    canvas.style.left = '50%';
+    canvas.style.top = '50%';
+    canvas.style.transform = 'translate(-50%, -50%)';
 
     previewContainer.appendChild(canvas);
 
@@ -503,7 +514,7 @@ ${sn}
           <div
             id="preview"
             bind:this={previewContainer}
-            class="border border-white/20 rounded-lg p-4 flex items-center justify-center flex-1 min-h-40 overflow-hidden"
+            class="relative border border-white/20 rounded-lg p-4 flex items-center justify-center flex-1 min-h-40 overflow-hidden"
           >
             {#if activeTab === 'image' && !onRenderWave}
               <span class="text-white text-sm opacity-50">Preview unavailable</span>
@@ -563,9 +574,11 @@ ${sn}
 
 <style>
   :global(.embed-preview-holder) {
-    width: 100%;
-    height: 100%;
-    min-height: 160px;
+    /* Absolutely positioned (inset mirrors the box's p-4) so the live embed
+       canvas can never feed back into the preview box's layout height —
+       percentage heights inside the content-sized flex box loop in Firefox. */
+    position: absolute;
+    inset: 1rem;
     border-radius: 4px;
     overflow: hidden;
     /* Checkerboard so a translucent embed background is visible in the preview */

@@ -119,6 +119,24 @@
     @apply bg-background text-foreground;
   }
 
+  /* Full-screen canvas app: the document behind the p5 canvas must match the
+     wave background, not the light theme, so the safe areas (notch / home
+     indicator) and URL-bar collapse regions on iOS never flash white. The
+     inline style on <html> is kept in sync with the user-picked background
+     color from App.svelte; #000 is the fallback before JS runs. */
+  html,
+  body {
+    background-color: #000;
+    overscroll-behavior: none;
+  }
+
+  html {
+    height: 100%;
+  }
+  body {
+    min-height: 100%;
+  }
+
   /* Tailwind v4's preflight no longer sets cursor:pointer on buttons. Restore it
      for all interactive controls; disabled ones fall back to not-allowed. */
   button:not(:disabled),
@@ -138,8 +156,8 @@
 /* Frosted glass surface used by the control panel and modals */
 .glass-surface {
   background: rgba(14, 14, 16, 0.55);
-  backdrop-filter: blur(22px) saturate(160%);
   -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.55),
