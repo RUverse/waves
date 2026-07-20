@@ -10,11 +10,12 @@
   // Callback to render the wave at a specific resolution (Image tab)
   export let onRenderWave: ((width: number, height: number) => HTMLCanvasElement | null) | null = null;
 
-  // Callback returning a self-contained embed config snapshot (Embed/React tabs)
+  // Callback returning a self-contained embed config snapshot (Embed tab)
   export let onGetEmbedConfig: (() => EmbedConfig) | null = null;
 
   type ResolutionPreset = 'phone' | 'desktop' | 'custom';
-  type Tab = 'image' | 'embed' | 'react';
+  type Tab = 'image' | 'embed';
+  type EmbedFormat = 'javascript' | 'react';
 
   interface ResolutionConfig {
     phone: { width: number; height: number };
@@ -27,6 +28,7 @@
   };
 
   let activeTab: Tab = 'image';
+  let embedFormat: EmbedFormat = 'javascript';
   let selectedRatio: ResolutionPreset = 'desktop';
   let customWidth = 1920;
   let customHeight = 1080;
@@ -40,7 +42,7 @@
   let copyFailed = false;
   let copyTimer: ReturnType<typeof setTimeout> | null = null;
 
-  $: isCodeTab = activeTab === 'embed' || activeTab === 'react';
+  $: isCodeTab = activeTab === 'embed';
 
   // Get current resolution based on selection
   $: currentResolution = selectedRatio === 'custom'
@@ -49,7 +51,7 @@
 
   // Rebuild preview when the modal opens or any relevant input changes.
   $: if (isOpen) {
-    void activeTab; void currentResolution;
+    void activeTab; void embedFormat; void currentResolution;
     tick().then(() => updatePreview());
   }
   $: if (!isOpen) {
@@ -115,7 +117,7 @@
     const config = onGetEmbedConfig();
 
     // Keep the copyable code in sync with what the preview shows.
-    snippet = activeTab === 'react' ? buildReactSnippet(config) : buildEmbedSnippet(config);
+    snippet = embedFormat === 'react' ? buildReactSnippet(config) : buildEmbedSnippet(config);
 
     // Mount the REAL runtime into a checkerboard holder so translucency is
     // visible and the preview exercises the exact code the snippet ships.
@@ -209,7 +211,7 @@ ${sn}
   }
 
   function handleDownload() {
-    const isReact = activeTab === 'react';
+    const isReact = embedFormat === 'react';
     const content = isReact ? snippet : fullHtmlDoc(snippet);
     const blob = new Blob([content], { type: isReact ? 'text/plain' : 'text/html' });
     const url = URL.createObjectURL(blob);
@@ -263,9 +265,6 @@ ${sn}
     customHeight = Math.max(100, Math.min(7680, Math.floor(value)));
   }
 
-  const INPUT_CLASS =
-    'w-full bg-white/20 border border-white/20 rounded px-3 py-2 text-white text-sm';
-
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') onClose();
   }
@@ -310,12 +309,6 @@ ${sn}
         >
           Embed
         </button>
-        <button
-          class="px-4 py-2 text-sm {activeTab === 'react' ? 'text-white border-b-2 border-white' : 'text-white text-opacity-50'}"
-          onclick={() => activeTab = 'react'}
-        >
-          React
-        </button>
       </div>
 
       <div class="grid grid-cols-3 gap-6">
@@ -325,78 +318,170 @@ ${sn}
             <!-- Resolution Preset Selection -->
             <fieldset>
               <legend class="text-white text-sm font-medium block mb-3">Export Resolution</legend>
-              <div class="space-y-2">
-                <label class="flex items-center gap-3 cursor-pointer">
-                  <input type="radio" name="ratio" value="phone" bind:group={selectedRatio} class="w-4 h-4" />
-                  <span class="text-white text-sm">Phone (1080 × 1920)</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer">
-                  <input type="radio" name="ratio" value="desktop" bind:group={selectedRatio} class="w-4 h-4" />
-                  <span class="text-white text-sm">Desktop (3840 × 2160)</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer">
-                  <input type="radio" name="ratio" value="custom" bind:group={selectedRatio} class="w-4 h-4" />
-                  <span class="text-white text-sm">Custom</span>
-                </label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="radiogroup" aria-label="Export resolution">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={selectedRatio === 'phone'}
+                  onclick={() => selectedRatio = 'phone'}
+                  class="relative min-h-36 rounded-xl border p-3 flex flex-col items-center justify-center gap-3 transition-all {selectedRatio === 'phone' ? 'border-white/45 bg-white/16 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_24px_rgba(0,0,0,0.22)]' : 'border-white/12 bg-white/5 hover:bg-white/10 hover:border-white/25'}"
+                >
+                  {#if selectedRatio === 'phone'}
+                    <span class="absolute right-2 top-2 flex size-4 items-center justify-center rounded-full bg-white text-black" aria-hidden="true">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 5.2 4.1 7.2 8 2.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                  {/if}
+                  <svg width="42" height="52" viewBox="0 0 42 52" fill="none" aria-hidden="true" class="text-white/80">
+                    <rect x="8" y="2" width="26" height="48" rx="6" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M17 6H25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    <circle cx="21" cy="45.5" r="1" fill="currentColor" />
+                  </svg>
+                  <span class="text-center">
+                    <span class="block text-sm font-medium text-white">Phone</span>
+                    <span class="mt-0.5 block text-[10px] text-white/45">1080 × 1920</span>
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={selectedRatio === 'desktop'}
+                  onclick={() => selectedRatio = 'desktop'}
+                  class="relative min-h-36 rounded-xl border p-3 flex flex-col items-center justify-center gap-3 transition-all {selectedRatio === 'desktop' ? 'border-white/45 bg-white/16 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_24px_rgba(0,0,0,0.22)]' : 'border-white/12 bg-white/5 hover:bg-white/10 hover:border-white/25'}"
+                >
+                  {#if selectedRatio === 'desktop'}
+                    <span class="absolute right-2 top-2 flex size-4 items-center justify-center rounded-full bg-white text-black" aria-hidden="true">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 5.2 4.1 7.2 8 2.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                  {/if}
+                  <svg width="58" height="46" viewBox="0 0 58 46" fill="none" aria-hidden="true" class="text-white/80">
+                    <rect x="6" y="3" width="46" height="32" rx="3.5" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M2.5 39H55.5L51 43H7L2.5 39Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                    <path d="M25 39H33" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                  <span class="text-center">
+                    <span class="block text-sm font-medium text-white">Desktop</span>
+                    <span class="mt-0.5 block text-[10px] text-white/45">3840 × 2160</span>
+                  </span>
+                </button>
+
+                <div
+                  class="relative min-h-36 rounded-xl border p-3 flex flex-col transition-all {selectedRatio === 'custom' ? 'border-white/45 bg-white/16 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_8px_24px_rgba(0,0,0,0.22)]' : 'border-white/12 bg-white/5 hover:bg-white/10 hover:border-white/25'}"
+                >
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedRatio === 'custom'}
+                    onclick={() => selectedRatio = 'custom'}
+                    class="flex flex-1 flex-col items-center justify-center gap-2 text-white"
+                  >
+                    {#if selectedRatio === 'custom'}
+                      <span class="absolute right-2 top-2 flex size-4 items-center justify-center rounded-full bg-white text-black" aria-hidden="true">
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M2 5.2 4.1 7.2 8 2.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                    {/if}
+                    <svg width="42" height="34" viewBox="0 0 42 34" fill="none" aria-hidden="true" class="text-white/80">
+                      <path d="M14 3H6C4.34 3 3 4.34 3 6V13M28 3H36C37.66 3 39 4.34 39 6V13M14 31H6C4.34 31 3 29.66 3 28V21M28 31H36C37.66 31 39 29.66 39 28V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span class="text-sm font-medium">Custom</span>
+                  </button>
+
+                  {#if selectedRatio === 'custom'}
+                    <div class="mt-3 grid grid-cols-2 sm:grid-cols-1 gap-2 border-t border-white/10 pt-3">
+                      <label class="block">
+                        <span class="mb-1 block text-[9px] font-medium uppercase tracking-wider text-white/45">Width</span>
+                        <div class="flex items-center rounded-lg border border-white/15 bg-black/20 px-2 focus-within:border-white/40 focus-within:bg-black/30">
+                          <input
+                            aria-label="Custom width in pixels"
+                            type="number"
+                            min="100"
+                            max="7680"
+                            value={customWidth}
+                            onchange={(e) => validateCustomWidth(parseInt(e.currentTarget.value) || customWidth)}
+                            oninput={(e) => customWidth = parseInt(e.currentTarget.value) || customWidth}
+                            class="min-w-0 w-full bg-transparent py-1.5 text-xs text-white outline-none"
+                          />
+                          <span class="text-[9px] text-white/35">px</span>
+                        </div>
+                      </label>
+                      <label class="block">
+                        <span class="mb-1 block text-[9px] font-medium uppercase tracking-wider text-white/45">Height</span>
+                        <div class="flex items-center rounded-lg border border-white/15 bg-black/20 px-2 focus-within:border-white/40 focus-within:bg-black/30">
+                          <input
+                            aria-label="Custom height in pixels"
+                            type="number"
+                            min="100"
+                            max="7680"
+                            value={customHeight}
+                            onchange={(e) => validateCustomHeight(parseInt(e.currentTarget.value) || customHeight)}
+                            oninput={(e) => customHeight = parseInt(e.currentTarget.value) || customHeight}
+                            class="min-w-0 w-full bg-transparent py-1.5 text-xs text-white outline-none"
+                          />
+                          <span class="text-[9px] text-white/35">px</span>
+                        </div>
+                      </label>
+                    </div>
+                  {/if}
+                </div>
               </div>
             </fieldset>
-
-            {#if selectedRatio === 'custom'}
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label for="custom-width" class="text-white text-sm font-medium block mb-2">Width (px)</label>
-                  <input
-                    id="custom-width"
-                    type="number"
-                    min="100"
-                    max="7680"
-                    value={customWidth}
-                    onchange={(e) => validateCustomWidth(parseInt(e.currentTarget.value) || customWidth)}
-                    oninput={(e) => customWidth = parseInt(e.currentTarget.value) || customWidth}
-                    class={INPUT_CLASS}
-                  />
-                </div>
-                <div>
-                  <label for="custom-height" class="text-white text-sm font-medium block mb-2">Height (px)</label>
-                  <input
-                    id="custom-height"
-                    type="number"
-                    min="100"
-                    max="7680"
-                    value={customHeight}
-                    onchange={(e) => validateCustomHeight(parseInt(e.currentTarget.value) || customHeight)}
-                    oninput={(e) => customHeight = parseInt(e.currentTarget.value) || customHeight}
-                    class={INPUT_CLASS}
-                  />
-                </div>
-              </div>
-            {/if}
           {:else}
-            <!-- Embed / React code -->
-            <div>
-              <label for="embed-snippet" class="text-white text-sm font-medium block mb-2">
-                {activeTab === 'react' ? 'React component' : 'Embed code'}
-              </label>
-              <textarea
-                id="embed-snippet"
-                readonly
-                rows="9"
-                value={snippet}
-                onclick={(e) => e.currentTarget.select()}
-                class="w-full bg-white/20 border border-white/20 rounded px-3 py-2 text-white text-xs font-mono resize-none"
-              ></textarea>
-              {#if activeTab === 'react'}
-                <p class="text-white text-xs opacity-70 mt-2">
-                  Save as <span class="font-mono">MyWave.jsx</span>, then use
-                  <span class="font-mono">&lt;MyWave /&gt;</span>. It fills its parent — give the
-                  parent a height. Self-contained, no dependencies.
-                </p>
-              {:else}
-                <p class="text-white text-xs opacity-70 mt-2">
-                  Self-contained — no external dependencies. Paste into any page; the wave fills
-                  its container. Set the background color's opacity to 0 for a see-through embed.
-                </p>
-              {/if}
+            <!-- Embed code with JavaScript / React format selector -->
+            <div class="space-y-4">
+              <div
+                class="inline-flex items-center rounded-lg border border-white/20 bg-white/5 p-0.5"
+                role="radiogroup"
+                aria-label="Embed format"
+              >
+                <button
+                  role="radio"
+                  aria-checked={embedFormat === 'javascript'}
+                  onclick={() => embedFormat = 'javascript'}
+                  class="rounded-md px-3 py-1.5 text-xs font-medium transition-colors {embedFormat === 'javascript' ? 'bg-white/20 text-white' : 'text-white/55 hover:text-white'}"
+                >
+                  JavaScript
+                </button>
+                <button
+                  role="radio"
+                  aria-checked={embedFormat === 'react'}
+                  onclick={() => embedFormat = 'react'}
+                  class="rounded-md px-3 py-1.5 text-xs font-medium transition-colors {embedFormat === 'react' ? 'bg-white/20 text-white' : 'text-white/55 hover:text-white'}"
+                >
+                  React
+                </button>
+              </div>
+
+              <div>
+                <label for="embed-snippet" class="text-white text-sm font-medium block mb-2">
+                  {embedFormat === 'react' ? 'React component' : 'Embed code'}
+                </label>
+                <textarea
+                  id="embed-snippet"
+                  readonly
+                  rows="9"
+                  value={snippet}
+                  onclick={(e) => e.currentTarget.select()}
+                  class="w-full bg-white/20 border border-white/20 rounded px-3 py-2 text-white text-xs font-mono resize-none"
+                ></textarea>
+                {#if embedFormat === 'react'}
+                  <p class="text-white text-xs opacity-70 mt-2">
+                    Save as <span class="font-mono">MyWave.jsx</span>, then use
+                    <span class="font-mono">&lt;MyWave /&gt;</span>. It fills its parent — give the
+                    parent a height. Self-contained, no dependencies.
+                  </p>
+                {:else}
+                  <p class="text-white text-xs opacity-70 mt-2">
+                    Self-contained — no external dependencies. Paste into any page; the wave fills
+                    its container. Set the background color's opacity to 0 for a see-through embed.
+                  </p>
+                {/if}
+              </div>
             </div>
           {/if}
         </div>
@@ -449,7 +534,7 @@ ${sn}
             variant="ghost"
             class="glass-btn h-9 px-5 rounded-lg text-sm font-medium"
           >
-            {activeTab === 'react' ? 'Download .jsx' : 'Download .html'}
+            {embedFormat === 'react' ? 'Download .jsx' : 'Download .html'}
           </Button>
           <Button
             onclick={handleCopy}

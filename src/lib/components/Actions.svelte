@@ -9,7 +9,7 @@
     'glass-btn flex flex-col items-center justify-center gap-0.5 w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg';
 </script>
 
-<!-- Top action bar: Reset + Shuffle (left), Share (right) -->
+<!-- Top action bar: Reset + Shuffle (left), Export (right) -->
 <div class="flex items-center justify-between gap-2">
   <div class="flex items-center gap-2">
     <Button onclick={onResetConfig} variant="ghost" class={iconBtnClass} title="Reset all settings to defaults">
@@ -31,12 +31,12 @@
     </Button>
   </div>
 
-  <Button onclick={onOpenExport} variant="ghost" class={iconBtnClass} title="Share / export">
-    <!-- Share icon (arrow out of tray) -->
+  <Button onclick={onOpenExport} variant="ghost" class={iconBtnClass} title="Export">
+    <!-- Export icon (arrow out of tray) -->
     <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M8 10V2M8 2L5 5M8 2L11 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M3 9V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    <span class="text-[10px] leading-none font-light opacity-75">Share</span>
+    <span class="text-[10px] leading-none font-light opacity-75">Export</span>
   </Button>
 </div>

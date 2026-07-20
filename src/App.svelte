@@ -505,8 +505,13 @@
   });
 </script>
 
-<div class="relative w-full h-screen bg-black">
-  <div id="p5-container" class="absolute inset-0"></div>
+<main class="relative w-full h-screen bg-black">
+  <div
+    id="p5-container"
+    class="absolute inset-0"
+    role="img"
+    aria-label="Interactive animated wave pattern preview"
+  ></div>
   
   <ControlPanel
     bind:showPanel
@@ -578,4 +583,4 @@
     onRenderWave={renderWave}
     onGetEmbedConfig={getEmbedConfig}
   />
-</div>
+</main>

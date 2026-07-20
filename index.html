@@ -4,10 +4,65 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/wave-fav.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>waves</title>
+    <meta
+      name="description"
+      content="Generate and customize animated wave patterns, then export them as images or embed them in any website or React project. Free and browser-based."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#000000" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="waves — Animated wave pattern generator for websites" />
+    <meta
+      property="og:description"
+      content="Create custom animated wave patterns and embed them in your website or React project, or export them as high-resolution images."
+    />
+    <meta property="og:site_name" content="Waves" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="waves — Animated wave pattern generator for websites" />
+    <meta
+      name="twitter:description"
+      content="Create custom animated wave patterns and embed them in your website or React project, or export them as high-resolution images."
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Waves",
+        "description": "A browser-based animated wave pattern generator for creating, customizing, exporting, and embedding wave designs in websites and React projects.",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript and a modern web browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Generate customizable animated wave patterns",
+          "Embed wave animations in HTML websites",
+          "Create React wave components",
+          "Export high-resolution PNG images",
+          "Customize wave color, amplitude, wavelength, spacing, and motion"
+        ]
+      }
+    </script>
+
+    <title>waves — Animated wave pattern generator for websites</title>
   </head>
   <body>
     <div id="app"></div>
+    <noscript>
+      <main>
+        <h1>Animated Wave Pattern Generator</h1>
+        <p>
+          Generate and customize animated wave patterns, export high-resolution images,
+          or embed your wave design in any website or React project.
+        </p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
