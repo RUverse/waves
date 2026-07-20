@@ -207,17 +207,20 @@
     showPanel = !showPanel;
   }
 
+  function randomSliderValue(range: { min: number; max: number; step: number }): number {
+    const stepCount = Math.round((range.max - range.min) / range.step);
+    return range.min + Math.floor(Math.random() * (stepCount + 1)) * range.step;
+  }
+
   function reset() {
     variationSeed += 10000 + Math.random() * 1000;
+    amplitude = randomSliderValue(AMPLITUDE_RANGE);
     wavelength = DEFAULT_WAVELENGTH + (Math.random() - 0.5) * WAVE_GENERATION.randomSeedRange;
     frequency = DEFAULT_FREQUENCY + (Math.random() - 0.5) * 0.8;
     period = DEFAULT_PERIOD + (Math.random() - 0.5) * 0.08;
     rotation = DEFAULT_ROTATION + (Math.random() - 0.5) * 120;
     spacing = DEFAULT_SPACING + (Math.random() - 0.5) * 1.0;
-    thickness = Math.max(
-      THICKNESS_RANGE.min,
-      Math.min(THICKNESS_RANGE.max, DEFAULT_THICKNESS + (Math.random() - 0.5) * 4)
-    );
+    thickness = randomSliderValue(THICKNESS_RANGE);
     taper = Math.random() * TAPER_RANGE.max;
     waveCount = Math.floor(DEFAULT_WAVE_COUNT + (Math.random() - 0.5) * 10);
     waveCount = Math.max(WAVE_COUNT_RANGE.min, Math.min(WAVE_COUNT_RANGE.max, waveCount));
