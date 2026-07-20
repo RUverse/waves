@@ -1,4 +1,8 @@
-import { drawWaveFrame, type WaveFrameConfig } from '../lib/waveMath';
+import {
+  applyGlitchToCanvas,
+  drawWaveFrame,
+  type WaveFrameConfig
+} from '../lib/waveMath';
 
 /**
  * Fully self-contained config for an embedded wave animation. Everything the
@@ -43,6 +47,7 @@ export function mount(container: HTMLElement, config?: EmbedConfig): EmbedHandle
   if (host.__waveEmbed) host.__waveEmbed.destroy();
 
   const canvas = document.createElement('canvas');
+  const glitchCanvas = document.createElement('canvas');
   canvas.style.display = 'block';
   canvas.style.width = '100%';
   canvas.style.height = '100%';
@@ -88,6 +93,14 @@ export function mount(container: HTMLElement, config?: EmbedConfig): EmbedHandle
     ctx!.fillStyle = cfg.backgroundColor;
     ctx!.fillRect(0, 0, cssWidth, cssHeight);
     drawWaveFrame(ctx!, cssWidth, cssHeight, cfg, offset, periodPhases);
+    applyGlitchToCanvas(
+      ctx!,
+      cssWidth,
+      cssHeight,
+      cfg.glitch ?? 0,
+      offset,
+      glitchCanvas
+    );
   }
 
   function step(): void {

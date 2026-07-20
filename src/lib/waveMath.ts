@@ -1,6 +1,7 @@
 import {
   BASE_SPACING,
   CANVAS_SETTINGS,
+  GLITCH_RANGE,
   TAPER_RANGE,
   THICKNESS_RANGE,
   INPUT_RANGE_FACTOR
@@ -13,6 +14,9 @@ export interface Point {
 
 const TAPER_PROFILE_CYCLES = 2;
 const MIN_TAPER_MULTIPLIER = 0.15;
+const GLITCH_BAND_HEIGHT = 24;
+const GLITCH_MAX_SHIFT = 160;
+const GLITCH_TIME_SCALE = 0.35;
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -73,6 +77,120 @@ export function getCurvatureOffset(
   const radius = Math.max(Math.abs(renderRadius), 1);
   const dy = y - centerY;
   return curvature * dy * dy / radius;
+}
+
+/**
+ * Produces a deterministic horizontal offset for a quantized y band. The
+ * animation phase advances the seed in discrete steps, creating a digital
+ * flicker without using frame-by-frame randomness. That keeps live, export,
+ * and embedded rendering reproducible at the same phase.
+ */
+export function getGlitchBandShift(
+  y: number,
+  animationPhase: number,
+  glitch: number
+): number {
+  const amount = clamp(
+    glitch,
+    GLITCH_RANGE.min,
+    GLITCH_RANGE.max * INPUT_RANGE_FACTOR
+  );
+  if (amount <= 0) return 0;
+
+  const band = Math.floor(y / GLITCH_BAND_HEIGHT);
+  const density = Math.min(1, 0.08 + amount * 0.72);
+  const scaledTime = animationPhase * GLITCH_TIME_SCALE;
+  const timeSlice = Math.floor(scaledTime);
+  const progress = scaledTime - timeSlice;
+  const easedProgress = progress * progress * (3 - 2 * progress);
+
+  const getTargetShift = (slice: number): number => {
+    const seed = band * 12.9898 + slice * 37.719;
+    if (seededRandom(seed + 19.19) > density) return 0;
+    return (seededRandom(seed + 47.11) * 2 - 1) * GLITCH_MAX_SHIFT * amount;
+  };
+
+  const currentShift = getTargetShift(timeSlice);
+  const nextShift = getTargetShift(timeSlice + 1);
+  return currentShift + (nextShift - currentShift) * easedProgress;
+}
+
+/**
+ * Applies the glitch to the completed image by moving full horizontal pixel
+ * bands. Shifted pixels wrap around the opposite edge, preserving transparent
+ * backgrounds and ensuring every row remains fully populated.
+ */
+export function applyGlitchToCanvas(
+  ctx: CanvasRenderingContext2D,
+  logicalWidth: number,
+  logicalHeight: number,
+  glitch: number,
+  animationPhase: number,
+  scratchCanvas?: HTMLCanvasElement
+): void {
+  if (glitch <= 0 || logicalWidth <= 0 || logicalHeight <= 0) return;
+
+  const sourceCanvas = ctx.canvas;
+  const pixelWidth = sourceCanvas.width;
+  const pixelHeight = sourceCanvas.height;
+  if (pixelWidth <= 0 || pixelHeight <= 0) return;
+
+  const scratch = scratchCanvas ?? document.createElement('canvas');
+  if (scratch.width !== pixelWidth) scratch.width = pixelWidth;
+  if (scratch.height !== pixelHeight) scratch.height = pixelHeight;
+
+  const scratchCtx = scratch.getContext('2d');
+  if (!scratchCtx) return;
+  scratchCtx.setTransform(1, 0, 0, 1, 0, 0);
+  scratchCtx.clearRect(0, 0, pixelWidth, pixelHeight);
+  scratchCtx.drawImage(sourceCanvas, 0, 0);
+
+  const scaleX = pixelWidth / logicalWidth;
+  const scaleY = pixelHeight / logicalHeight;
+  const pixelBandHeight = Math.max(1, Math.round(GLITCH_BAND_HEIGHT * scaleY));
+
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+
+  for (let y = 0; y < pixelHeight; y += pixelBandHeight) {
+    const bandHeight = Math.min(pixelBandHeight, pixelHeight - y);
+    const logicalY = y / scaleY;
+    const rawShift = Math.round(
+      getGlitchBandShift(logicalY, animationPhase, glitch) * scaleX
+    );
+    const shift = ((rawShift % pixelWidth) + pixelWidth) % pixelWidth;
+
+    if (shift === 0) {
+      ctx.drawImage(scratch, 0, y, pixelWidth, bandHeight, 0, y, pixelWidth, bandHeight);
+      continue;
+    }
+
+    ctx.drawImage(
+      scratch,
+      0,
+      y,
+      pixelWidth - shift,
+      bandHeight,
+      shift,
+      y,
+      pixelWidth - shift,
+      bandHeight
+    );
+    ctx.drawImage(
+      scratch,
+      pixelWidth - shift,
+      y,
+      shift,
+      bandHeight,
+      0,
+      y,
+      shift,
+      bandHeight
+    );
+  }
+
+  ctx.restore();
 }
 
 export function createVariableWidthWavePoints(
@@ -249,6 +367,7 @@ export interface WaveFrameConfig {
   frequency: number;
   rotation: number;
   curvature?: number;
+  glitch?: number;
   spacing: number;
   thickness: number;
   taper: number;

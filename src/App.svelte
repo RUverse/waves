@@ -16,6 +16,7 @@
     resetPeriod as resetPeriodValue,
     resetRotation as resetRotationValue,
     resetCurvature as resetCurvatureValue,
+    resetGlitch as resetGlitchValue,
     resetSpacing as resetSpacingValue,
     resetThickness as resetThicknessValue,
     resetTaper as resetTaperValue,
@@ -36,6 +37,7 @@
     DEFAULT_PERIOD,
     DEFAULT_ROTATION,
     DEFAULT_CURVATURE,
+    DEFAULT_GLITCH,
     DEFAULT_SPACING,
     DEFAULT_THICKNESS,
     DEFAULT_TAPER,
@@ -60,6 +62,7 @@
     PERIOD_RANGE,
     ROTATION_RANGE,
     CURVATURE_RANGE,
+    GLITCH_RANGE,
     SPACING_JITTER_MAX_FRACTION,
     THICKNESS_RANGE,
     TAPER_RANGE,
@@ -76,6 +79,7 @@
   let period = savedState?.period ?? DEFAULT_PERIOD;
   let rotation = savedState?.rotation ?? DEFAULT_ROTATION;
   let curvature = savedState?.curvature ?? DEFAULT_CURVATURE;
+  let glitch = savedState?.glitch ?? DEFAULT_GLITCH;
   let spacing = savedState?.spacing ?? DEFAULT_SPACING;
   let thickness = savedState?.thickness ?? DEFAULT_THICKNESS;
   let taper = savedState?.taper ?? DEFAULT_TAPER;
@@ -156,7 +160,7 @@
 
   // Check if current config has unsaved changes
   $: currentWaveConfigString = JSON.stringify({
-    amplitude, wavelength, frequency, period, rotation, curvature, spacing, thickness, taper, waveCount,
+    amplitude, wavelength, frequency, period, rotation, curvature, glitch, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
     waveColor, backgroundColor,
     baseAmplitudes,
@@ -187,6 +191,7 @@
       period,
       rotation,
       curvature,
+      glitch,
       spacing,
       thickness,
       taper,
@@ -222,6 +227,12 @@
     return range.min + Math.floor(Math.random() * (stepCount + 1)) * range.step;
   }
 
+  function randomNonZeroSliderValue(range: { min: number; max: number; step: number }): number {
+    const firstNonZero = Math.max(range.step, range.min);
+    const stepCount = Math.floor((range.max - firstNonZero) / range.step);
+    return firstNonZero + Math.floor(Math.random() * (stepCount + 1)) * range.step;
+  }
+
   function reset() {
     variationSeed += 10000 + Math.random() * 1000;
     amplitude = randomSliderValue(AMPLITUDE_RANGE);
@@ -229,7 +240,16 @@
     frequency = DEFAULT_FREQUENCY + (Math.random() - 0.5) * 0.8;
     period = DEFAULT_PERIOD + (Math.random() - 0.5) * 0.08;
     rotation = DEFAULT_ROTATION + (Math.random() - 0.5) * 120;
-    curvature = randomSliderValue(CURVATURE_RANGE);
+    if (nerdMode) {
+      curvature = randomSliderValue(CURVATURE_RANGE);
+      glitch = Math.random() < 1 / 3
+        ? randomNonZeroSliderValue(GLITCH_RANGE)
+        : DEFAULT_GLITCH;
+    } else {
+      curvature = DEFAULT_CURVATURE;
+      curvatureVariation = DEFAULT_CURVATURE_VARIATION;
+      glitch = DEFAULT_GLITCH;
+    }
     spacing = DEFAULT_SPACING + (Math.random() - 0.5) * 1.0;
     thickness = randomSliderValue(THICKNESS_RANGE);
     taper = Math.random() * TAPER_RANGE.max;
@@ -244,6 +264,7 @@
     period = DEFAULT_PERIOD;
     rotation = DEFAULT_ROTATION;
     curvature = DEFAULT_CURVATURE;
+    glitch = DEFAULT_GLITCH;
     spacing = DEFAULT_SPACING;
     thickness = DEFAULT_THICKNESS;
     taper = DEFAULT_TAPER;
@@ -270,7 +291,7 @@
 
   // Helper to create config from current state
   const getCurrentConfig = (): WaveConfig => ({
-    amplitude, wavelength, frequency, period, rotation, curvature, spacing, thickness, taper, waveCount,
+    amplitude, wavelength, frequency, period, rotation, curvature, glitch, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
     waveColor, backgroundColor,
     baseAmplitudes,
@@ -285,6 +306,7 @@
     period = config.period;
     rotation = config.rotation ?? DEFAULT_ROTATION;
     curvature = config.curvature ?? DEFAULT_CURVATURE;
+    glitch = config.glitch ?? DEFAULT_GLITCH;
     spacing = config.spacing;
     thickness = config.thickness ?? DEFAULT_THICKNESS;
     taper = config.taper ?? DEFAULT_TAPER;
@@ -366,6 +388,7 @@
       period,
       rotation,
       curvature,
+      glitch,
       spacing,
       thickness,
       taper,
@@ -396,6 +419,7 @@
       period,
       rotation,
       curvature,
+      glitch,
       spacing,
       thickness,
       taper,
@@ -436,6 +460,7 @@
       () => period,
       () => rotation,
       () => curvature,
+      () => glitch,
       () => spacing,
       () => thickness,
       () => taper,
@@ -495,6 +520,7 @@
     bind:period
     bind:rotation
     bind:curvature
+    bind:glitch
     bind:spacing
     bind:thickness
     bind:taper
@@ -519,6 +545,7 @@
     onResetPeriod={() => period = resetPeriodValue()}
     onResetRotation={() => rotation = resetRotationValue()}
     onResetCurvature={() => curvature = resetCurvatureValue()}
+    onResetGlitch={() => glitch = resetGlitchValue()}
     onResetSpacing={() => spacing = resetSpacingValue()}
     onResetThickness={() => thickness = resetThicknessValue()}
     onResetTaper={() => taper = resetTaperValue()}

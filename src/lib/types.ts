@@ -17,6 +17,7 @@ export interface WaveState {
   period: number;
   rotation: number;
   curvature: number;
+  glitch: number;
   spacing: number;
   thickness: number;
   taper: number;

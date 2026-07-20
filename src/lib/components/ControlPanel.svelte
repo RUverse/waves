@@ -35,6 +35,7 @@
   export let period: number;
   export let rotation: number;
   export let curvature: number;
+  export let glitch: number;
   export let spacing: number;
   export let thickness: number;
   export let taper: number;
@@ -54,6 +55,7 @@
   export let onResetPeriod: () => void;
   export let onResetRotation: () => void;
   export let onResetCurvature: () => void;
+  export let onResetGlitch: () => void;
   export let onResetSpacing: () => void;
   export let onResetThickness: () => void;
   export let onResetTaper: () => void;
@@ -162,6 +164,7 @@
       bind:period
       bind:rotation
       bind:curvature
+      bind:glitch
       bind:spacing
       bind:thickness
       bind:taper
@@ -181,6 +184,7 @@
       {onResetPeriod}
       {onResetRotation}
       {onResetCurvature}
+      {onResetGlitch}
       {onResetSpacing}
       {onResetThickness}
       {onResetTaper}

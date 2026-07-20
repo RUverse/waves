@@ -2,6 +2,7 @@ import {
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_CURVATURE,
   DEFAULT_CURVATURE_VARIATION,
+  DEFAULT_GLITCH,
   DEFAULT_TAPER,
   DEFAULT_THICKNESS,
   DEFAULT_THICKNESS_VARIATION,
@@ -15,6 +16,7 @@ export interface WaveConfig {
   period: number;
   rotation?: number;
   curvature?: number;
+  glitch?: number;
   spacing: number;
   thickness?: number;
   taper?: number;
@@ -62,6 +64,7 @@ export function generateWaveId(config: WaveConfig): string {
     config.period,
     config.rotation ?? 0,
     config.curvature ?? DEFAULT_CURVATURE,
+    config.glitch ?? DEFAULT_GLITCH,
     config.spacing,
     config.thickness ?? DEFAULT_THICKNESS,
     config.taper ?? DEFAULT_TAPER,
@@ -139,6 +142,7 @@ export function normalizeWaveConfig(config: WaveConfig): WaveConfig {
     period: config.period,
     rotation: config.rotation,
     curvature: config.curvature,
+    glitch: config.glitch,
     spacing: config.spacing,
     thickness: config.thickness,
     taper: config.taper,
