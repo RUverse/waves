@@ -8,7 +8,29 @@
   import Configurations from './Configurations.svelte';
   import ResetIcon from './ResetIcon.svelte';
   import type { Wave } from '$lib/configStorage';
-  import { DEFAULT_WAVE_COLOR, DEFAULT_BACKGROUND_COLOR } from '$lib/constants';
+  import {
+    DEFAULT_AMPLITUDE,
+    DEFAULT_WAVELENGTH,
+    DEFAULT_FREQUENCY,
+    DEFAULT_PERIOD,
+    DEFAULT_ROTATION,
+    DEFAULT_CURVATURE,
+    DEFAULT_GLITCH,
+    DEFAULT_SPACING,
+    DEFAULT_THICKNESS,
+    DEFAULT_TAPER,
+    DEFAULT_WAVE_COUNT,
+    DEFAULT_AMPLITUDE_VARIATION,
+    DEFAULT_WAVELENGTH_VARIATION,
+    DEFAULT_FREQUENCY_VARIATION,
+    DEFAULT_PERIOD_VARIATION,
+    DEFAULT_ROTATION_VARIATION,
+    DEFAULT_CURVATURE_VARIATION,
+    DEFAULT_SPACING_VARIATION,
+    DEFAULT_THICKNESS_VARIATION,
+    DEFAULT_WAVE_COLOR,
+    DEFAULT_BACKGROUND_COLOR
+  } from '$lib/constants';
 
   // Normalize a color to lowercase 8-digit hex so #ffffff and #ffffffff compare
   // equal when deciding whether a color reset is already at its default.
@@ -66,6 +88,28 @@
   $: backgroundColorAtDefault = normColor(backgroundColor) === normColor(DEFAULT_BACKGROUND_COLOR);
   $: colorsAtDefault = waveColorAtDefault && backgroundColorAtDefault;
 
+  $: allSettingsAtDefault =
+    amplitude === DEFAULT_AMPLITUDE &&
+    wavelength === DEFAULT_WAVELENGTH &&
+    frequency === DEFAULT_FREQUENCY &&
+    period === DEFAULT_PERIOD &&
+    rotation === DEFAULT_ROTATION &&
+    curvature === DEFAULT_CURVATURE &&
+    glitch === DEFAULT_GLITCH &&
+    spacing === DEFAULT_SPACING &&
+    thickness === DEFAULT_THICKNESS &&
+    taper === DEFAULT_TAPER &&
+    waveCount === DEFAULT_WAVE_COUNT &&
+    amplitudeVariation === DEFAULT_AMPLITUDE_VARIATION &&
+    wavelengthVariation === DEFAULT_WAVELENGTH_VARIATION &&
+    frequencyVariation === DEFAULT_FREQUENCY_VARIATION &&
+    periodVariation === DEFAULT_PERIOD_VARIATION &&
+    rotationVariation === DEFAULT_ROTATION_VARIATION &&
+    curvatureVariation === DEFAULT_CURVATURE_VARIATION &&
+    spacingVariation === DEFAULT_SPACING_VARIATION &&
+    thicknessVariation === DEFAULT_THICKNESS_VARIATION &&
+    colorsAtDefault;
+
   function resetColors() {
     onResetWaveColor();
     onResetBackgroundColor();
@@ -90,13 +134,13 @@
 </script>
 
 <!-- Control Panel with Config Tabs -->
-<div class="absolute bottom-1 left-1 flex items-end gap-2">
+<div class="absolute bottom-1 left-1 grid items-end">
   <!-- Menu Button (only shown when panel is hidden) -->
   {#if !showPanel}
     <Button
       onclick={onTogglePanel}
       variant="ghost"
-      class="glass-btn w-10 h-10 p-0 m-2 rounded-xl flex items-center justify-center"
+      class="glass-btn col-start-1 row-start-1 w-10 h-10 p-0 m-2 rounded-xl flex items-center justify-center"
       title="Open panel"
     >
       <!-- Hamburger Menu Icon -->
@@ -111,10 +155,10 @@
   <!-- Control Panel -->
   {#if showPanel}
     <div
-      class="control-panel glass-surface flex flex-row rounded-2xl p-3 m-0 gap-3 w-[calc(100vw-0.5rem)] sm:w-auto max-w-[calc(100vw-0.5rem)] max-h-[calc(100dvh-0.5rem)] overflow-hidden"
+      class="control-panel glass-surface col-start-1 row-start-1 flex flex-row rounded-2xl p-3 m-0 gap-3 w-[calc(100vw-0.5rem)] sm:w-auto max-w-[calc(100vw-0.5rem)] max-h-[calc(100dvh-0.5rem)] overflow-hidden"
       transition:fly={{ x: -24, duration: 260, easing: cubicOut }}
     >
-      <!-- Left Sidebar: saved configs + save actions, collapse pinned at bottom -->
+      <!-- Left Sidebar: saved configs, collapse pinned at bottom -->
       <div class="flex flex-col gap-2 w-16 sm:w-40 shrink-0">
         <header class="px-1 py-1">
           <h1 class="text-white/70 text-xs font-semibold tracking-[0.2em] uppercase">Waves</h1>
@@ -133,42 +177,22 @@
           />
         </div>
 
-        <div class="flex gap-2">
+        {#if activeWaveId && hasUnsavedChanges}
           <Button
-            onclick={onSaveConfig}
+            onclick={onSaveConfigAsNew}
             variant="ghost"
-            class="glass-btn flex-1 flex items-center justify-center gap-1.5 h-9 px-1 has-[>svg]:px-1 rounded-lg"
-            title="Save config"
+            class="glass-btn flex items-center justify-center gap-1.5 h-9 px-2 rounded-lg"
+            title="Save as new config"
           >
-            <!-- Save icon -->
+            <!-- Save as new icon (save with plus) -->
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 14H4C3.44772 14 3 13.5523 3 13V3C3 2.44772 3.44772 2 4 2H9L13 6V13C13 13.5523 12.5523 14 12 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M10 2V6H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M6 10H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M8 8V12M6 10H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
-            <span class="hidden sm:inline text-[10px] leading-none font-light opacity-75">Save</span>
+            <span class="hidden sm:inline text-[10px] leading-none font-light opacity-75">Save as new</span>
           </Button>
-          {#if activeWaveId}
-            <Button
-              onclick={onSaveConfigAsNew}
-              variant="ghost"
-              class="glass-btn flex-1 flex items-center justify-center gap-1.5 h-9 px-1 has-[>svg]:px-1 rounded-lg"
-              title="Save as new config"
-            >
-              <!-- Save as new icon (save with plus) -->
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 14H4C3.44772 14 3 13.5523 3 13V3C3 2.44772 3.44772 2 4 2H9L13 6V13C13 13.5523 12.5523 14 12 14Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M10 2V6H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M8 8V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                <path d="M6 10H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              <span class="hidden sm:flex flex-col items-start gap-1 text-[10px] leading-none font-light opacity-75">
-                <span>Save</span>
-                <span>as new</span>
-              </span>
-            </Button>
-          {/if}
-        </div>
+        {/if}
 
         <div class="flex-1"></div>
 
@@ -212,7 +236,7 @@
             onclick={() => onToggleNerdMode(false)}
             class="min-w-0 flex-1 rounded-md px-1 py-0.5 text-[10px] font-medium leading-4 transition-colors {!nerdMode ? 'bg-white/25 text-white' : 'text-white/55 hover:text-white'}"
           >
-            Core
+            Basic
           </button>
           <button
             role="radio"
@@ -227,14 +251,14 @@
         <Button
           onclick={onTogglePanel}
           variant="ghost"
-          class="glass-btn flex items-center justify-center sm:justify-start gap-2.5 w-full h-10 px-0 sm:px-3 rounded-lg text-sm font-medium"
+          class="glass-btn group flex items-center justify-center sm:justify-start gap-2 w-full h-9 px-0 sm:px-2.5 rounded-lg text-[11px] font-medium"
           title="Hide UI"
         >
           <!-- Chevron Left Icon -->
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="text-white/55 transition-colors group-hover:text-white" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <polyline points="13,5 8,10 13,15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
           </svg>
-          <span class="hidden sm:inline">Hide UI</span>
+          <span class="hidden text-white/55 transition-colors group-hover:text-white sm:inline">Hide UI</span>
         </Button>
       </div>
 
@@ -244,7 +268,15 @@
       <!-- Main Content Area -->
       <div class="flex-1 sm:flex-none min-w-0 flex flex-col gap-3 min-h-0 overflow-y-auto">
         <!-- Top action bar -->
-        <Actions {onReset} {onResetConfig} {onOpenExport} />
+        <Actions
+          {onReset}
+          {onResetConfig}
+          {onSaveConfig}
+          {onOpenExport}
+          {activeWaveId}
+          {hasUnsavedChanges}
+          resetDisabled={allSettingsAtDefault}
+        />
 
     <Configurations
       bind:amplitude

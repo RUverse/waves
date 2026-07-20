@@ -104,7 +104,7 @@ export const SPACING_JITTER_MAX_FRACTION = 0.48;
 export const INPUT_RANGE_FACTOR = 4;
 
 // Default wave thickness
-export const DEFAULT_THICKNESS = 2;
+export const DEFAULT_THICKNESS = 4;
 
 export const THICKNESS_RANGE = {
   min: 1,
