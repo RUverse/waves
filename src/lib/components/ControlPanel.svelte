@@ -134,7 +134,7 @@
 </script>
 
 <!-- Control Panel with Config Tabs -->
-<div class="absolute bottom-1 left-1 grid items-end">
+<div class="absolute bottom-[max(0.25rem,env(safe-area-inset-bottom))] left-[max(0.25rem,env(safe-area-inset-left))] grid items-end">
   <!-- Menu Button (only shown when panel is hidden) -->
   {#if !showPanel}
     <Button
@@ -155,7 +155,7 @@
   <!-- Control Panel -->
   {#if showPanel}
     <div
-      class="control-panel glass-surface col-start-1 row-start-1 flex flex-row rounded-2xl p-3 m-0 gap-3 w-[calc(100vw-0.5rem)] sm:w-auto max-w-[calc(100vw-0.5rem)] max-h-[calc(100dvh-0.5rem)] overflow-hidden"
+      class="control-panel glass-surface col-start-1 row-start-1 flex flex-row rounded-2xl p-3 m-0 gap-3 w-[calc(100vw-0.5rem-env(safe-area-inset-left)-env(safe-area-inset-right))] sm:w-auto max-w-[calc(100vw-0.5rem-env(safe-area-inset-left)-env(safe-area-inset-right))] max-h-[calc(100dvh-0.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-hidden"
       transition:fly={{ x: -24, duration: 260, easing: cubicOut }}
     >
       <!-- Left Sidebar: saved configs, collapse pinned at bottom -->

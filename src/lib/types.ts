@@ -3,6 +3,18 @@ export interface ValueRange {
   max: number;
 }
 
+/**
+ * A two-stop linear gradient paired with a solid base color: `color` is the
+ * second stop (8-digit hex allowed), `angle` is in CSS degrees. Key order
+ * {enabled, color, angle} is load-bearing — these objects are JSON.stringified
+ * for unsaved-change snapshots, so construct them in this order.
+ */
+export interface GradientValue {
+  enabled: boolean;
+  color: string;
+  angle: number;
+}
+
 export interface WaveAttribute {
   displayName: string;
   name: string;

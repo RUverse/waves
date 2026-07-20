@@ -27,7 +27,7 @@ import {
   getMaxTaperMultiplier,
   clampThickness,
   createVariableWidthWavePoints,
-  drawVariableWidthWaveCanvas
+  drawWaveFrame
 } from './waveMath';
 
 // Re-export the pure variation helpers so existing importers (App.svelte) keep
@@ -430,113 +430,58 @@ export function renderWaveToCanvas(
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Set drawing style for waves
-    ctx.strokeStyle = waveColor;
-    ctx.fillStyle = waveColor;
-    
-    // Calculate the scale ratio to maintain consistent spacing and appearance
-    const scaleX = width / originalCanvasWidth;
-    const scaleY = height / originalCanvasHeight;
-    
-    // Scale stroke weight proportionally (use average scale)
-    const avgScale = (scaleX + scaleY) / 2;
-    ctx.lineWidth = clampThickness(thickness) * avgScale;
-
-    // Gap is an absolute pixel value (BASE_SPACING * spacing), matching the
-    // live sketch so the export reproduces exactly what's on screen, then
-    // scaled to the export dimensions.
-    const baseSp = BASE_SPACING;
-    const adjustedSpacing = baseSp * spacing;
-    const scaledAdjustedSpacing = adjustedSpacing * scaleX;
-
-    // Scale vertex step for smooth rendering at different resolutions
-    const scaledVertexStep = Math.max(1, Math.round(CANVAS_SETTINGS.vertexStep / avgScale));
-
-    const centerX = width / 2;
-    const centerY = height / 2;
-
-    // Draw each wave much taller than the canvas so it spans any rotation
-    // without an edge cutout (mirrors createWaveSketch).
-    const maxScaledAmplitude = amplitudes.reduce(
-      (max, a) => Math.max(max, Math.abs((a ?? 0) * scaleX)),
-      0
+    // Draw through the same native-scale renderer the live sketch mirrors
+    // (drawWaveFrame), under a single uniform canvas transform. Scaling the
+    // whole coordinate system — instead of scaling parameters one by one —
+    // keeps every quantity (wavelength, amplitude, spacing, thickness,
+    // curvature, rotation) in the live sketch's pixel space, so the export is
+    // geometrically identical to the live view at any resolution.
+    //
+    // The uniform factor "contains" the live viewport: when the export aspect
+    // ratio differs from the window's, the extra area reveals more of the same
+    // centered pattern (exactly what resizing the live window does) rather
+    // than stretching the waves.
+    const scale = Math.min(
+      width / Math.max(originalCanvasWidth, 1),
+      height / Math.max(originalCanvasHeight, 1)
     );
-    const taperAmount = getTaperAmount(taper);
-    const maxScaledThickness = waveCount > 0
-      ? Math.max(
-          ...Array.from({ length: waveCount }, (_, idx) =>
-            clampThickness(
-              thickness + (cachedThicknessVariations[idx] ?? 0)
-            ) * avgScale * getMaxTaperMultiplier(taperAmount)
-          )
-        )
-      : THICKNESS_RANGE.min * avgScale;
-    const coverRadius =
-      Math.hypot(width, height) / 2 + maxScaledAmplitude + maxScaledThickness;
+    const logicalWidth = width / scale;
+    const logicalHeight = height / scale;
 
-    // Draw EXACTLY waveCount waves as a horizontally centered block, matching
-    // the live sketch (wave count is literal).
-    for (let i = 0; i < waveCount; i++) {
-      const idx = i;
-      const scaledAmplitude = (amplitudes[idx] ?? 0) * scaleX;
-      const waveWavelength = wavelength + (cachedWavelengthVariations[idx] ?? 0);
-      const waveFrequency = frequency + (cachedFrequencyVariations[idx] ?? 0);
-      const waveRotation = rotation + (cachedRotationVariations[idx] ?? 0);
-      const waveCurvature = curvature + (cachedCurvatureVariations[idx] ?? 0);
-      const waveThickness = clampThickness(
-        thickness + (cachedThicknessVariations[idx] ?? 0)
-      ) * avgScale;
-      const rotationRadians = waveRotation * Math.PI / 180;
-      const rotationCos = Math.cos(rotationRadians);
-      const rotationSin = Math.sin(rotationRadians);
+    ctx.save();
+    ctx.scale(scale, scale);
+    drawWaveFrame(
+      ctx,
+      logicalWidth,
+      logicalHeight,
+      {
+        amplitudes,
+        waveCount,
+        wavelength,
+        frequency,
+        rotation,
+        curvature,
+        spacing,
+        thickness,
+        taper,
+        waveColor,
+        cachedWavelengthVariations,
+        cachedFrequencyVariations,
+        cachedRotationVariations,
+        cachedCurvatureVariations,
+        cachedSpacingVariations,
+        cachedThicknessVariations,
+        // Sample finer when upscaling so segments stay short in device pixels.
+        vertexStep: CANVAS_SETTINGS.vertexStep / Math.max(1, scale)
+      },
+      offset,
+      periodPhases
+    );
+    ctx.restore();
 
-      const spacingJitter = (cachedSpacingVariations[idx] ?? 0) * scaledAdjustedSpacing;
-      const x = centerX + (i - (waveCount - 1) / 2) * scaledAdjustedSpacing + spacingJitter;
-
-      // Match the live sketch: shared base scroll plus this wave's period drift.
-      const wavePhase = offset + (periodPhases[idx] ?? 0);
-
-      if (taperAmount > 0) {
-        drawVariableWidthWaveCanvas(
-          ctx,
-          x,
-          centerY - coverRadius,
-          centerY + coverRadius,
-          scaledVertexStep,
-          scaledAmplitude,
-          waveWavelength,
-          wavePhase,
-          waveFrequency,
-          waveCurvature,
-          coverRadius,
-          waveThickness,
-          taperAmount,
-          idx * 0.85,
-          centerX,
-          centerY,
-          rotationCos,
-          rotationSin
-        );
-      } else {
-        ctx.lineWidth = waveThickness;
-        ctx.beginPath();
-        let first = true;
-        for (let y = centerY - coverRadius; y <= centerY + coverRadius; y += scaledVertexStep) {
-          const waveX = x + getCurvatureOffset(y, centerY, coverRadius, waveCurvature) +
-            Math.sin(y * waveWavelength + wavePhase + waveFrequency) * scaledAmplitude;
-          const rotatedPoint = rotatePoint(waveX, y, centerX, centerY, rotationCos, rotationSin);
-          if (first) {
-            ctx.moveTo(rotatedPoint.x, rotatedPoint.y);
-            first = false;
-          } else {
-            ctx.lineTo(rotatedPoint.x, rotatedPoint.y);
-          }
-        }
-        ctx.stroke();
-      }
-    }
-
-    applyGlitchToCanvas(ctx, width, height, glitch, offset);
+    // Glitch operates on raw canvas pixels; passing the logical size scales
+    // band height and shift by the same factor as the waves.
+    applyGlitchToCanvas(ctx, logicalWidth, logicalHeight, glitch, offset);
 
     return canvas;
   } catch (error) {

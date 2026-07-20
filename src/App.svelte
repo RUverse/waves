@@ -182,6 +182,16 @@
     }
   }
 
+  // Keep the document itself the same color as the wave background so iOS
+  // safe areas (notch, home indicator) and overscroll regions never show a
+  // mismatched color around the canvas.
+  $: if (typeof document !== 'undefined') {
+    document.documentElement.style.backgroundColor = backgroundColor;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', backgroundColor);
+  }
+
   // Auto-save state whenever it changes
   $: if (typeof window !== 'undefined') {
     const state: WaveState = {
@@ -505,7 +515,7 @@
   });
 </script>
 
-<main class="relative w-full h-screen bg-black">
+<main class="relative w-full h-dvh bg-black">
   <div
     id="p5-container"
     class="absolute inset-0"
