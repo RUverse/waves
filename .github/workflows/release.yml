@@ -1,0 +1,95 @@
+name: Prepare npm release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Use Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify release metadata
+        run: >-
+          node -e 'const pkg = require("./package.json");
+          if (process.env.GITHUB_REF_NAME !== pkg.version)
+          throw new Error(`Tag ${process.env.GITHUB_REF_NAME} does not match package version ${pkg.version}`);
+          if (!/^\d+\.\d+\.\d+$/.test(pkg.version))
+          throw new Error(`Package version ${pkg.version} must be a numeric semantic version without a v prefix`);
+          if (pkg.dependencies && Object.keys(pkg.dependencies).length)
+          throw new Error("The public package must not have runtime dependencies")'
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check editor and package types
+        run: bun run check
+
+      - name: Build editor
+        run: bun run build
+
+      - name: Test package runtime
+        run: bun run test:package
+
+      - name: Pack npm artifact
+        run: |
+          mkdir release
+          npm pack --silent --pack-destination release
+          set -- release/*.tgz
+          if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
+            echo "Expected exactly one npm tarball in release/." >&2
+            exit 1
+          fi
+          echo "PACKAGE_PATH=$1" >> "$GITHUB_ENV"
+
+      - name: Inspect and smoke-test packed ESM entry
+        run: |
+          tar -tzf "$PACKAGE_PATH"
+          if tar -tzf "$PACKAGE_PATH" | grep -E '^package/(src|tests|node_modules)/'; then
+            echo "The tarball contains development-only files." >&2
+            exit 1
+          fi
+          smoke_dir="$(mktemp -d)"
+          tar -xzf "$PACKAGE_PATH" -C "$smoke_dir"
+          PACKAGE_ENTRY="$smoke_dir/package/lib-dist/index.js" node --input-type=module -e '
+            import { pathToFileURL } from "node:url";
+            const module = await import(pathToFileURL(process.env.PACKAGE_ENTRY));
+            for (const name of ["DEFAULT_WAVE_CONFIG", "createWaveConfig", "mountWave"]) {
+              if (!(name in module)) throw new Error(`Missing public export: ${name}`);
+            }
+            const config = module.createWaveConfig({ seed: 7, waveCount: 4 });
+            if (config.seed !== 7 || config.waveCount !== 4) throw new Error("Packed runtime smoke test failed");
+          '
+
+      - name: Attest package provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: ${{ env.PACKAGE_PATH }}
+
+      - name: Create draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title="$GITHUB_REF_NAME" \
+            --notes="Prepared npm package for @ruverse/waves $GITHUB_REF_NAME. This draft has not been published to npm." \
+            --draft \
+            "$PACKAGE_PATH"
