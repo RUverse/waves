@@ -1,5 +1,14 @@
 # Change Log
 
+## August 15, 2026
+- Added the publish-ready `@ruverse/waves` 0.1.0 ESM package with TypeScript declarations and zero runtime dependencies
+- Added compact deterministic seeded configurations and persisted variation seeds for current and saved editor state
+- Unified npm, editor preview, and self-contained embed rendering on the shared Canvas wave runtime
+- Added responsive HiDPI mounting, partial updates, repeated-mount cleanup, reduced-motion support, offscreen pausing, and observer fallbacks
+- Added package lifecycle and deterministic-rendering tests plus npm tarball verification
+- Integrated four theme-aware wave background presets into the sibling Focus Tab extension with Off, Random, and pinned selection
+- Added root `AGENTS.md` instructions for package boundaries, documentation, verification, and publishing safeguards
+
 ## November 3, 2025
 - Added bold text styling to active saved configuration tab for better visual indication of which config is currently selected
 - Reorganized panel toggle buttons: collapse button now appears on the left side of action buttons with spacing, menu button only shows when panel is hidden

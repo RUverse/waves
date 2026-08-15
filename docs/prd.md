@@ -1,7 +1,7 @@
 # Product Requirements Document: Ruwaves
 
 ## Overview
-Ruwaves is a visual wave generation and manipulation tool that creates beautiful, animated wave patterns on screen. Users can customize wave properties in real-time and save their favorite configurations for later use.
+Ruwaves is a visual wave generation and manipulation tool that creates beautiful, animated wave patterns on screen. Users can customize wave properties in real-time, save their favorite configurations, export images or self-contained embeds, and reuse the renderer in other web applications through the `@ruverse/waves` package.
 
 ---
 
@@ -16,7 +16,7 @@ Ruwaves is a visual wave generation and manipulation tool that creates beautiful
 - Each wave moves independently based on its configuration
 
 #### 1.2 Multiple Wave Support
-- Display between 1 and 20 simultaneous waves
+- Display between 1 and 30 simultaneous waves
 - Each wave has unique characteristics generated from a random seed
 - Waves are evenly distributed across the screen
 - All waves respond to global parameter changes while maintaining individual variations
@@ -25,7 +25,7 @@ Ruwaves is a visual wave generation and manipulation tool that creates beautiful
 
 ### 2. Wave Parameters
 
-Users can adjust six key parameters that control wave behavior and appearance:
+Users can adjust the parameters that control wave behavior and appearance:
 
 #### 2.1 Amplitude
 - Controls the height/intensity of wave oscillations
@@ -59,9 +59,29 @@ Users can adjust six key parameters that control wave behavior and appearance:
 
 #### 2.6 Wave Count
 - Controls how many waves are displayed simultaneously
-- Range: 1 to 20 waves
+- Range: 1 to 30 waves
 - Default: 5 waves
 - Can be enabled/disabled independently
+
+#### 2.7 Rotation
+- Rotates individual waves around the canvas center
+- Supports deterministic per-wave variation
+
+#### 2.8 Curvature and Glitch
+- Curvature bends wave centerlines in either direction
+- Glitch applies deterministic animated horizontal band displacement
+
+#### 2.9 Thickness and Taper
+- Thickness controls the rendered width of each wave
+- Taper varies width along the wave profile
+
+#### 2.10 Colors
+- Wave and background colors support solid colors and transparency
+- Transparent backgrounds allow waves to overlay host application themes
+
+#### 2.11 Per-Wave Variation
+- Amplitude, wavelength, frequency, period, rotation, curvature, spacing, and thickness support seeded variation
+- The same configuration and variation seed reproduce the same pattern
 
 ---
 
@@ -107,6 +127,7 @@ Users can adjust six key parameters that control wave behavior and appearance:
 #### 4.3 Configuration Persistence
 - All saved configurations persist across browser sessions
 - Current parameter values and panel state are automatically saved
+- Variation seeds are stored with current and saved configurations
 - Application restores previous state when reopened
 
 ---
@@ -122,7 +143,7 @@ Users can adjust six key parameters that control wave behavior and appearance:
 #### 5.2 Reset Config
 - Restores all parameters to their default values
 - Resets all toggles to default states (only amplitude enabled)
-- Generates new random seed for waves
+- Restores the deterministic default variation seed
 - Clears any active configuration selection
 - Icon: Circular arrow (reset symbol)
 
@@ -143,7 +164,9 @@ Users can adjust six key parameters that control wave behavior and appearance:
 
 #### 5.6 Export
 - Opens export modal for exporting configurations
-- Export functionality to be implemented
+- Exports PNG images at phone, desktop, or custom resolutions
+- Generates self-contained JavaScript and React embed snippets
+- Embed previews use the same renderer shipped by the public package
 - Icon: Download/arrow down symbol
 
 ---
@@ -170,6 +193,26 @@ Users can adjust six key parameters that control wave behavior and appearance:
 - Adapts to different screen sizes
 - Waves automatically adjust to viewport dimensions
 - Control panel maintains readability at various sizes
+
+---
+
+### 7. Reusable Web Package
+
+#### 7.1 Package Distribution
+- Ship the renderer as the public ESM package `@ruverse/waves`
+- Include TypeScript declarations and no runtime dependencies
+- Keep npm publication as an explicit release action separate from normal builds
+
+#### 7.2 Public API
+- `createWaveConfig(overrides)` creates a complete normalized configuration
+- `mountWave(container, config)` mounts a responsive animated canvas
+- Mounted instances support partial configuration updates and idempotent destruction
+
+#### 7.3 Runtime Behavior
+- Package imports are safe in server-rendered applications until mounting begins
+- Rendering responds to container resizing and device pixel ratio
+- Animation pauses offscreen and respects reduced-motion preferences
+- Multiple independent instances can run on the same page
 
 ---
 
@@ -243,15 +286,13 @@ Users can adjust six key parameters that control wave behavior and appearance:
 ### Reliability
 - Configurations persist across browser sessions
 - No data loss when closing/reopening the application
-- Smooth performance with up to 20 waves displayed
+- Smooth performance with up to 30 waves displayed
 
 ---
 
 ## Future Enhancements (Out of Scope for v1)
 
 - Custom naming for saved configurations
-- Export configurations as shareable codes
-- Color customization options
 - Different wave types (sine, square, triangle, etc.)
 - Audio reactivity
 - Animation recording/export

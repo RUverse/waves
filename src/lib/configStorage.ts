@@ -10,6 +10,7 @@ import {
 } from './constants';
 
 export interface WaveConfig {
+  variationSeed?: number;
   amplitude: number;
   wavelength: number;
   frequency: number;
@@ -58,6 +59,7 @@ const SAVED_WAVES_KEY = 'ruwaves-saved-waves';
 export function generateWaveId(config: WaveConfig): string {
   // Create a string from key config values
   const configString = [
+    config.variationSeed ?? 0,
     config.amplitude,
     config.wavelength,
     config.frequency,
@@ -136,6 +138,7 @@ export function createWave(config: WaveConfig, existingIds: Iterable<string> = [
 
 export function normalizeWaveConfig(config: WaveConfig): WaveConfig {
   return {
+    variationSeed: Number.isFinite(config.variationSeed) ? config.variationSeed : 0,
     amplitude: config.amplitude,
     wavelength: config.wavelength,
     frequency: config.frequency,
