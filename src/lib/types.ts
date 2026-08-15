@@ -23,6 +23,7 @@ export interface WaveAttribute {
 }
 
 export interface WaveState {
+  variationSeed?: number;
   amplitude: number;
   wavelength: number;
   frequency: number;

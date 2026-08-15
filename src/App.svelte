@@ -28,6 +28,7 @@
   import { loadSettings, saveSettings } from '$lib/settingsStorage';
   import type { WaveState } from '$lib/types';
   import type { EmbedConfig } from './embed';
+  import { createWaveConfig } from './package';
   import { createWaveManagement } from '$hooks/useWaveManagement';
   import type { Wave, WaveConfig } from '$lib/configStorage';
   import {
@@ -100,7 +101,7 @@
   let thicknessVariation = savedState?.thicknessVariation ?? DEFAULT_THICKNESS_VARIATION;
   
   // Seed for regenerating all random variations
-  let variationSeed = 0;
+  let variationSeed = savedState?.variationSeed ?? 0;
 
   // Base amplitudes for each wave (not including variations)
   let baseAmplitudes: number[] = [];
@@ -160,6 +161,7 @@
 
   // Check if current config has unsaved changes
   $: currentWaveConfigString = JSON.stringify({
+    variationSeed,
     amplitude, wavelength, frequency, period, rotation, curvature, glitch, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
     waveColor, backgroundColor,
@@ -195,6 +197,7 @@
   // Auto-save state whenever it changes
   $: if (typeof window !== 'undefined') {
     const state: WaveState = {
+      variationSeed,
       amplitude,
       wavelength,
       frequency,
@@ -268,6 +271,7 @@
   }
 
   function resetConfig() {
+    variationSeed = 0;
     amplitude = DEFAULT_AMPLITUDE;
     wavelength = DEFAULT_WAVELENGTH;
     frequency = DEFAULT_FREQUENCY;
@@ -301,6 +305,7 @@
 
   // Helper to create config from current state
   const getCurrentConfig = (): WaveConfig => ({
+    variationSeed,
     amplitude, wavelength, frequency, period, rotation, curvature, glitch, spacing, thickness, taper, waveCount,
     ampToggle, waveToggle, freqToggle, perToggle, rotationToggle, spacingToggle, waveCountToggle,
     waveColor, backgroundColor,
@@ -310,6 +315,7 @@
 
   // Helper to apply config to current state
   const applyConfig = (config: WaveConfig) => {
+    variationSeed = config.variationSeed ?? 0;
     amplitude = config.amplitude;
     wavelength = config.wavelength;
     frequency = config.frequency;
@@ -414,11 +420,12 @@
     );
   }
 
-  // Snapshot the current wave into a fully self-contained embed config. Arrays
-  // are copied so later live edits don't mutate an already-generated snippet.
+  // Snapshot the current wave into the same compact, seeded configuration used
+  // by the public package and self-contained embeds.
   function getEmbedConfig(): EmbedConfig {
-    return {
-      amplitudes: [...amplitudes],
+    return createWaveConfig({
+      seed: variationSeed,
+      amplitude,
       waveCount,
       wavelength,
       frequency,
@@ -431,15 +438,18 @@
       taper,
       waveColor,
       backgroundColor,
-      cachedWavelengthVariations: [...cachedWavelengthVariations],
-      cachedFrequencyVariations: [...cachedFrequencyVariations],
-      cachedPeriodVariations: [...cachedPeriodVariations],
-      cachedRotationVariations: [...cachedRotationVariations],
-      cachedCurvatureVariations: [...cachedCurvatureVariations],
-      cachedSpacingVariations: [...cachedSpacingVariations],
-      cachedThicknessVariations: [...cachedThicknessVariations],
-      vertexStep: CANVAS_SETTINGS.vertexStep
-    };
+      vertexStep: CANVAS_SETTINGS.vertexStep,
+      variations: {
+        amplitude: amplitudeVariation,
+        wavelength: wavelengthVariation,
+        frequency: frequencyVariation,
+        period: periodVariation,
+        rotation: rotationVariation,
+        curvature: curvatureVariation,
+        spacing: spacingVariation,
+        thickness: thicknessVariation
+      }
+    });
   }
 
   function openExport() {

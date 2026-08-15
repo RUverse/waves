@@ -1,6 +1,57 @@
-# Waves
+# Ruwaves
 
-A beautiful, interactive wave generation and visualization tool built with Svelte and TypeScript. Waves is a wave visualization app that lets you create and customize animated wave patterns. Control multiple parameters like amplitude, wavelength, frequency, period, spacing, and wave count to generate unique, mesmerizing wave animations. Save and your favorite configurations and switch between them instantly.
+A deterministic animated-wave renderer and visual editor. The reusable renderer is published as `@ruverse/waves`; the Svelte app in this repository is its configuration and export UI.
+
+## Package
+
+Install the package:
+
+```sh
+npm install @ruverse/waves
+```
+
+Mount a wave into any sized element:
+
+```js
+import { createWaveConfig, mountWave } from '@ruverse/waves';
+
+const config = createWaveConfig({
+  seed: 42,
+  waveCount: 7,
+  amplitude: 52,
+  backgroundColor: 'transparent',
+  waveColor: 'rgba(255, 255, 255, 0.14)',
+  variations: {
+    amplitude: 0.2,
+    rotation: 0.04,
+    spacing: 0.08
+  }
+});
+
+const handle = mountWave(document.querySelector('#waves'), config);
+
+// Replace the configuration without creating another canvas.
+handle.update({ ...config, seed: 84 });
+
+// Remove the canvas and all listeners/animation work.
+handle.destroy();
+```
+
+The container controls the rendered size and must have non-zero width and height. Configuration objects are JSON-safe, and the same configuration and seed always produce the same per-wave variations. The runtime has no dependencies, pauses while offscreen, respects reduced-motion preferences, and can be imported during server rendering as long as `mountWave()` is called only in the browser.
+
+Build and test the publishable package:
+
+```sh
+bun run build:lib
+bun run test:package
+npm pack --dry-run
+```
+
+Version `0.1.0` is publish-ready but is not published by the repository build.
+
+## Visual editor
+
+The editor lets you customize amplitude, wavelength, frequency, period, rotation, curvature, glitch, spacing, thickness, taper, colors, variation, and wave count. Configurations can be saved locally or exported as an image or self-contained web embed.
 
 ## Run Locally
 

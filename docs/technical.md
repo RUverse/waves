@@ -8,6 +8,7 @@
 - **Vite**: Build tool and development server
 - **p5.js**: Graphics rendering library for wave visualization
 - **Tailwind CSS**: Utility-first CSS framework
+- **Canvas 2D**: Dependency-free renderer used by embeds and `@ruverse/waves`
 
 ### UI Components
 - Custom Svelte components built with Tailwind
@@ -20,6 +21,10 @@
 ```
 ruwaves/
 ├── src/
+│   ├── package/
+│   │   └── index.ts             # Public package API and browser runtime
+│   ├── embed/
+│   │   └── index.ts             # Self-contained embed compatibility wrapper
 │   ├── lib/
 │   │   ├── components/
 │   │   │   ├── ui/              # Reusable UI components
@@ -35,19 +40,47 @@ ruwaves/
 │   │   ├── storage.ts           # Local storage utilities
 │   │   ├── types.ts             # TypeScript type definitions
 │   │   ├── utils.ts             # Utility functions
-│   │   └── waveLogic.ts         # Wave generation algorithms
+│   │   ├── waveLogic.ts         # Wave generation algorithms
+│   │   └── waveMath.ts          # Shared Canvas/p5 rendering math
 │   ├── App.svelte               # Main application component
 │   ├── app.css                  # Global styles
 │   └── main.ts                  # Application entry point
 ├── docs/
 │   ├── prd.md                   # Product Requirements Document
 │   └── technical.md             # This file
+├── tests/                        # Public package tests
+├── vite.lib.config.ts           # ESM package build
+├── tsconfig.lib.json            # Package declaration build
 └── public/                       # Static assets
 ```
 
 ---
 
 ## Architecture
+
+### Deliverables and Shared Renderer
+
+The repository produces two separate deliverables:
+
+- The Svelte visual editor, built into `dist/`.
+- The dependency-free `@ruverse/waves` ESM package, built into `lib-dist/`.
+
+`src/lib/waveMath.ts` is the shared mathematical renderer. The editor uses it
+through the p5 integration and image export, while `src/package/index.ts` uses
+the Canvas 2D path for reusable web mounting. `src/embed/index.ts` wraps the
+package runtime so exported JavaScript and React snippets stay visually aligned
+with npm consumers.
+
+The public configuration is compact and JSON-safe. A numeric seed plus nested
+variation strengths are resolved into private per-wave arrays at runtime.
+Editor UI toggles and cached arrays are not part of the public API.
+
+The package exports `createWaveConfig()`, `mountWave()`,
+`DEFAULT_WAVE_CONFIG`, and the related TypeScript config and handle types.
+Mounted instances own their canvas, animation frame, observers, and media-query
+listener. They support partial updates, clean repeated mounting, reduced motion,
+offscreen pausing, HiDPI scaling, and idempotent destruction. Importing the
+module does not access browser globals, which keeps SSR imports safe.
 
 ### Component Hierarchy
 
