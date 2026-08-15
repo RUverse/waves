@@ -12,6 +12,14 @@ These instructions apply to the entire repository.
   technical documentation aligned, and add one concise change-log entry when
   the implementation is complete.
 
+## Local environment
+
+- Copy `.env.example` to `.env` and adjust it for the local checkout layout.
+- Keep machine-specific paths, hostnames, account names, repository endpoints,
+  and other workstation details only in `.env`, which is ignored by Git.
+  Documentation and tracked configuration must use portable relative paths,
+  organization-owned URLs, or environment variable names.
+
 ## Product and package boundaries
 
 Ruwaves has two deliverables in one repository:
@@ -50,8 +58,9 @@ Ruwaves has two deliverables in one repository:
 
 ## Focus Tab integration
 
-The sibling repository `../focus-tab` consumes this package during local
-development through `"@ruverse/waves": "file:../ruwaves"`.
+The Focus Tab repository consumes this package during local development through
+a local file dependency. Set `FOCUS_TAB_DIR` in the ignored `.env` file to the
+location of that checkout.
 
 - Focus Tab owns its curated background preset names and values; the package
   owns configuration normalization and rendering.
@@ -68,7 +77,8 @@ development through `"@ruverse/waves": "file:../ruwaves"`.
 ## Generated files and publishing
 
 - `dist/` is the editor production build and `lib-dist/` is the generated npm
-  package build. Both are generated and must stay untracked.
+  package build. `release/` contains generated package tarballs. All three are
+  generated and must stay untracked.
 - `npm pack`/`npm pack --dry-run` runs the `prepack` library build. Inspect the
   tarball contents before any release.
 - The published package should contain only the library bundle, declarations,
@@ -76,6 +86,23 @@ development through `"@ruverse/waves": "file:../ruwaves"`.
 - Never run `npm publish` unless the user explicitly requests publication and
   the package checks, packed-import smoke test, version, and npm authentication
   have all been verified.
+
+## Preparing a package release
+
+- Use `dev` as the integration branch and keep `main` release-only. Move a
+  release from `dev` to `main` through a reviewed release pull request.
+- Confirm the requested semantic version rather than guessing it. Update
+  `package.json` with `npm version <version> --no-git-tag-version`, then run all
+  checks and inspect the packed artifact before committing the version bump.
+- After the release pull request is merged, tag the merged `main` commit with
+  the exact package version and no `v` prefix. Pushing that tag triggers
+  `.github/workflows/release.yml`.
+- The workflow verifies the tag and package version, installs from the lockfile,
+  checks the editor and package types, runs package tests, creates and
+  smoke-tests the npm tarball, attests it, and attaches it to a draft GitHub
+  Release.
+- The workflow deliberately does not run `npm publish`. Review the draft and
+  publish to npm only after the user explicitly requests that separate action.
 
 ## Commands and verification
 
@@ -92,7 +119,8 @@ Use Bun 1.3 or newer for this repository:
 | `bun run test:package` | Build and run package normalization/lifecycle tests |
 | `npm pack --dry-run` | Verify publishable package contents without publishing |
 
-For changes that affect Focus Tab, also run from `../focus-tab`:
+For changes that affect Focus Tab, also run from `$FOCUS_TAB_DIR` (configured in
+the ignored `.env` file):
 
 | Command | Purpose |
 | --- | --- |

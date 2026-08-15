@@ -20,6 +20,10 @@
 
 ```
 ruwaves/
+├── .github/
+│   └── workflows/
+│       └── release.yml          # Tag-driven npm release preparation
+├── .env.example                # Portable local cross-repository settings
 ├── src/
 │   ├── package/
 │   │   └── index.ts             # Public package API and browser runtime
@@ -51,6 +55,7 @@ ruwaves/
 ├── tests/                        # Public package tests
 ├── vite.lib.config.ts           # ESM package build
 ├── tsconfig.lib.json            # Package declaration build
+├── release/                      # Generated npm tarballs (ignored)
 └── public/                       # Static assets
 ```
 
@@ -81,6 +86,30 @@ Mounted instances own their canvas, animation frame, observers, and media-query
 listener. They support partial updates, clean repeated mounting, reduced motion,
 offscreen pausing, HiDPI scaling, and idempotent destruction. Importing the
 module does not access browser globals, which keeps SSR imports safe.
+
+### Package Release Pipeline
+
+Package changes are integrated on `dev` and promoted to the release-only
+`main` branch through a release pull request. A numeric tag that exactly matches
+the `package.json` version triggers `.github/workflows/release.yml`.
+
+The workflow uses the committed Bun lockfile and performs these steps on a clean
+runner:
+
+1. Validate that the tag matches the package version and that the public package
+   has no runtime dependencies.
+2. Run Svelte and TypeScript checks and build the editor application.
+3. Build and test the reusable Canvas runtime.
+4. Create the npm tarball, reject development-only content, and import its ESM
+   entry in Node without browser globals.
+5. Create a provenance attestation and attach the tarball to a draft GitHub
+   Release.
+
+The workflow intentionally does not call `npm publish`. Publication remains a
+separate, explicit maintainer action after the draft and package contents have
+been reviewed. Local tarballs are written under ignored `release/`. Local
+checkout paths and non-organization repository endpoints belong only in the
+ignored `.env`, using `.env.example` as the portable template.
 
 ### Component Hierarchy
 

@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "description": "Deterministic, configurable animated canvas waves for the web.",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://gitlab.com/alirezaekt/waves.git"
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "canvas",
