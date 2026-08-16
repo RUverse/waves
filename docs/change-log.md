@@ -10,6 +10,7 @@
 - Added root `AGENTS.md` instructions for package boundaries, documentation, verification, and publishing safeguards
 - Added a tag-driven `0.1.0` package workflow that validates, builds, tests, packs, smoke-tests, attests, and attaches the npm tarball to a draft GitHub Release without publishing it
 - Moved local checkout paths and personal repository endpoints out of tracked documentation and configuration, with portable `.env.example` templates for contributors
+- Moved the canonical repository to the `RUverse/waves` GitHub organization project and restored organization-owned npm repository, issue, and homepage metadata
 
 ## November 3, 2025
 - Added bold text styling to active saved configuration tab for better visual indication of which config is currently selected
