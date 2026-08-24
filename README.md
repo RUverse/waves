@@ -1,4 +1,4 @@
-# Ruwaves
+# Waves
 
 A deterministic animated-wave renderer and visual editor. The reusable renderer is published as `@ruverse/waves`; the Svelte app in this repository is its configuration and export UI.
 
@@ -48,6 +48,18 @@ npm pack --dry-run
 ```
 
 Version `0.1.0` is publish-ready but is not published by the repository build.
+
+## Releases
+
+Package releases are prepared on `dev` and moved to the release-only `main`
+branch through a release pull request. After the pull request is merged, an
+exact numeric tag matching `package.json` triggers the GitHub Actions release
+workflow.
+
+The workflow runs the editor and package checks, creates and smoke-tests the npm
+tarball, attests its provenance, and attaches it to a draft GitHub Release for
+maintainer review. It does not publish to npm automatically. See
+[`AGENTS.md`](./AGENTS.md) for the complete release procedure.
 
 ## Visual editor
 

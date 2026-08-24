@@ -5,7 +5,14 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/alirezaekt/waves.git"
+    "url": "git+https://github.com/RUverse/waves.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RUverse/waves/issues"
+  },
+  "homepage": "https://github.com/RUverse/waves#readme",
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "canvas",
