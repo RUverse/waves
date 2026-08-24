@@ -1,4 +1,4 @@
-# Ruwaves
+# Waves
 
 A deterministic animated-wave renderer and visual editor. The reusable renderer is published as `@ruverse/waves`; the Svelte app in this repository is its configuration and export UI.
 
