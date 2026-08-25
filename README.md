@@ -1,5 +1,7 @@
 # Waves
 
+[Open Waves](https://waves.ruverse.ai/)
+
 A deterministic animated-wave renderer and visual editor. The reusable renderer is published as `@ruverse/waves`; the Svelte app in this repository is its configuration and export UI.
 
 ## Package
@@ -47,7 +49,8 @@ bun run test:package
 npm pack --dry-run
 ```
 
-Version `0.1.0` is publish-ready but is not published by the repository build.
+Version `0.1.0` is available from the public npm registry. Repository builds
+prepare and attest release artifacts but do not publish them automatically.
 
 ## Releases
 
