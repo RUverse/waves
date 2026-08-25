@@ -22,7 +22,8 @@
 ruwaves/
 ├── .github/
 │   └── workflows/
-│       └── release.yml          # Tag-driven npm release preparation
+│       ├── release.yml          # Tag-driven release artifact preparation
+│       └── publish.yml          # Release-published npm trusted publishing
 ├── .env.example                # Portable local cross-repository settings
 ├── src/
 │   ├── package/
@@ -105,11 +106,15 @@ runner:
 5. Create a provenance attestation and attach the tarball to a draft GitHub
    Release.
 
-The workflow intentionally does not call `npm publish`. Publication remains a
-separate, explicit maintainer action after the draft and package contents have
-been reviewed. Local tarballs are written under ignored `release/`. Local
-checkout paths and non-organization repository endpoints belong only in the
-ignored `.env`, using `.env.example` as the portable template.
+The tag workflow intentionally stops at a draft GitHub Release. Publishing that
+stable release is the maintainer approval gate and triggers
+`.github/workflows/publish.yml`. The publish workflow downloads the exact
+reviewed tarball, verifies its GitHub attestation, package metadata, contents,
+and ESM entry, then publishes it through npm trusted publishing with short-lived
+OIDC credentials. npm generates provenance automatically, and no npm write
+token is stored in GitHub. Local tarballs are written under ignored `release/`.
+Local checkout paths and non-organization repository endpoints belong only in
+the ignored `.env`, using `.env.example` as the portable template.
 
 ### Component Hierarchy
 

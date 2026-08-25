@@ -1,5 +1,8 @@
 # Change Log
 
+## August 25, 2026
+- Added npm trusted publishing that verifies and publishes the reviewed GitHub Release tarball through short-lived GitHub Actions OIDC credentials with automatic npm provenance
+
 ## August 15, 2026
 - Added the publish-ready `@ruverse/waves` 0.1.0 ESM package with TypeScript declarations and zero runtime dependencies
 - Added compact deterministic seeded configurations and persisted variation seeds for current and saved editor state

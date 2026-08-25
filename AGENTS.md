@@ -58,9 +58,9 @@ Ruwaves has two deliverables in one repository:
 
 ## Focus Tab integration
 
-The Focus Tab repository consumes this package during local development through
-a local file dependency. Set `FOCUS_TAB_DIR` in the ignored `.env` file to the
-location of that checkout.
+The Focus Tab repository consumes the published package from npm. Set
+`FOCUS_TAB_DIR` in the ignored `.env` file to the location of that checkout when
+verifying changes across both repositories.
 
 - Focus Tab owns its curated background preset names and values; the package
   owns configuration normalization and rendering.
@@ -70,9 +70,8 @@ location of that checkout.
   stable for the lifetime of one new-tab page.
 - Wave backgrounds remain non-interactive, behind all content, transparent,
   theme-aware, and readable in both light and dark modes.
-- After `@ruverse/waves@0.1.0` is published, replace the sibling `file:`
-  dependency with the compatible registry version; do not publish from an
-  ordinary implementation task unless the user explicitly requests it.
+- Keep Focus Tab on a compatible registry version and regenerate its lockfile
+  when intentionally upgrading the package.
 
 ## Generated files and publishing
 
@@ -83,9 +82,9 @@ location of that checkout.
   tarball contents before any release.
 - The published package should contain only the library bundle, declarations,
   package metadata, README, and license.
-- Never run `npm publish` unless the user explicitly requests publication and
-  the package checks, packed-import smoke test, version, and npm authentication
-  have all been verified.
+- Never run `npm publish` from a local shell unless the user explicitly requests
+  an emergency manual publication and the package checks, packed-import smoke
+  test, version, and npm authentication have all been verified.
 
 ## Preparing a package release
 
@@ -101,8 +100,15 @@ location of that checkout.
   checks the editor and package types, runs package tests, creates and
   smoke-tests the npm tarball, attests it, and attaches it to a draft GitHub
   Release.
-- The workflow deliberately does not run `npm publish`. Review the draft and
-  publish to npm only after the user explicitly requests that separate action.
+- Review the draft and its attached tarball. Publishing the stable GitHub
+  Release is the explicit approval step that triggers
+  `.github/workflows/publish.yml`.
+- The publish workflow downloads that exact release asset, verifies its GitHub
+  attestation, metadata, contents, and ESM entry, then publishes it through npm
+  trusted publishing. It must not use a stored npm write token.
+- npm must trust GitHub organization `RUverse`, repository `waves`, workflow
+  filename `publish.yml`, with the `npm publish` action allowed. Keep those
+  case-sensitive settings aligned with the workflow.
 
 ## Commands and verification
 
@@ -124,7 +130,7 @@ the ignored `.env` file):
 
 | Command | Purpose |
 | --- | --- |
-| `npm install` | Install esbuild and link the sibling package |
+| `npm install` | Install the locked build dependencies from npm |
 | `npm test` | Test setting normalization and preset inventory |
 | `npm run build` | Build Chrome and Firefox unpacked directories and zip archives |
 

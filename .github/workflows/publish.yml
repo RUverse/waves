@@ -1,0 +1,91 @@
+name: Publish npm package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Verify release metadata and npm toolchain
+        run: |
+          NPM_VERSION="$(npm --version)" node -e '
+            const pkg = require("./package.json");
+            const [major, minor, patch] = process.env.NPM_VERSION.split(".").map(Number);
+            if (process.env.RELEASE_TAG !== pkg.version)
+              throw new Error(`Release ${process.env.RELEASE_TAG} does not match package version ${pkg.version}`);
+            if (!/^\d+\.\d+\.\d+$/.test(pkg.version))
+              throw new Error(`Package version ${pkg.version} must be numeric semantic versioning`);
+            if (major < 11 || (major === 11 && (minor < 5 || (minor === 5 && patch < 1))))
+              throw new Error("Trusted publishing requires npm 11.5.1 or newer");
+          '
+
+      - name: Download reviewed release artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir release
+          gh release download "$RELEASE_TAG" --pattern '*.tgz' --dir release
+          set -- release/*.tgz
+          if [ "$#" -ne 1 ] || [ ! -f "$1" ]; then
+            echo "Expected exactly one npm tarball on the GitHub Release." >&2
+            exit 1
+          fi
+          echo "PACKAGE_PATH=$1" >> "$GITHUB_ENV"
+
+      - name: Verify attestation and packed package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh attestation verify "$PACKAGE_PATH" \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+            --source-ref "refs/tags/$RELEASE_TAG" \
+            --deny-self-hosted-runners
+          tar -tzf "$PACKAGE_PATH"
+          if tar -tzf "$PACKAGE_PATH" | grep -E '^package/(src|tests|node_modules)/'; then
+            echo "The tarball contains development-only files." >&2
+            exit 1
+          fi
+          PACKED_PACKAGE_JSON="$(tar -xOf "$PACKAGE_PATH" package/package.json)" node -e '
+            const checkedOut = require("./package.json");
+            const packed = JSON.parse(process.env.PACKED_PACKAGE_JSON);
+            if (packed.name !== "@ruverse/waves" || packed.version !== checkedOut.version)
+              throw new Error(`Unexpected packed package: ${packed.name}@${packed.version}`);
+            if (packed.repository?.url !== checkedOut.repository?.url)
+              throw new Error("Packed repository metadata does not match the tagged source");
+            if (packed.dependencies && Object.keys(packed.dependencies).length)
+              throw new Error("The public package must not have runtime dependencies");
+          '
+          smoke_dir="$(mktemp -d)"
+          tar -xzf "$PACKAGE_PATH" -C "$smoke_dir"
+          PACKAGE_ENTRY="$smoke_dir/package/lib-dist/index.js" node --input-type=module -e '
+            import { pathToFileURL } from "node:url";
+            const module = await import(pathToFileURL(process.env.PACKAGE_ENTRY));
+            for (const name of ["DEFAULT_WAVE_CONFIG", "createWaveConfig", "mountWave"]) {
+              if (!(name in module)) throw new Error(`Missing public export: ${name}`);
+            }
+          '
+
+      - name: Publish reviewed artifact to npm
+        run: npm publish "$PACKAGE_PATH" --access public

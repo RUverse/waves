@@ -49,8 +49,7 @@ bun run test:package
 npm pack --dry-run
 ```
 
-Version `0.1.0` is available from the public npm registry. Repository builds
-prepare and attest release artifacts but do not publish them automatically.
+Version `0.1.0` is available from the public npm registry.
 
 ## Releases
 
@@ -59,10 +58,13 @@ branch through a release pull request. After the pull request is merged, an
 exact numeric tag matching `package.json` triggers the GitHub Actions release
 workflow.
 
-The workflow runs the editor and package checks, creates and smoke-tests the npm
-tarball, attests its provenance, and attaches it to a draft GitHub Release for
-maintainer review. It does not publish to npm automatically. See
-[`AGENTS.md`](./AGENTS.md) for the complete release procedure.
+The tag workflow runs the editor and package checks, creates and smoke-tests the
+npm tarball, attests it, and attaches it to a draft GitHub Release for
+maintainer review. Publishing that stable release triggers a separate trusted
+publishing workflow, which verifies the exact attached artifact and publishes
+it to npm through short-lived OIDC credentials with automatic npm provenance.
+No npm write token is stored in GitHub. See [`AGENTS.md`](./AGENTS.md) for the
+complete release procedure.
 
 ## Visual editor
 

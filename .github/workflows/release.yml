@@ -90,6 +90,6 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" \
             --title="$GITHUB_REF_NAME" \
-            --notes="Prepared npm package for @ruverse/waves $GITHUB_REF_NAME. This draft has not been published to npm." \
+            --notes="Prepared npm package for @ruverse/waves $GITHUB_REF_NAME. Publishing this draft triggers npm trusted publishing." \
             --draft \
             "$PACKAGE_PATH"
