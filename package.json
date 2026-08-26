@@ -1,6 +1,6 @@
 {
   "name": "@ruverse/waves",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Deterministic, configurable animated canvas waves for the web.",
   "license": "MIT",
   "repository": {

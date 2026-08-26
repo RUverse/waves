@@ -1,11 +1,12 @@
 import {
   mountWave,
   type WaveConfig,
-  type WaveConfigInput,
+  type WaveConfigSource,
   type WaveHandle
 } from '../package';
 
 export type EmbedConfig = WaveConfig;
+export type EmbedConfigSource = WaveConfigSource;
 export type EmbedHandle = WaveHandle;
 
 // Exported snippets replace this marker with their serialized config. The app
@@ -15,7 +16,7 @@ const BAKED_CONFIG = '__WAVE_CONFIG_PLACEHOLDER__';
 /** Backwards-compatible embed entry used by the editor and generated snippets. */
 export function mount(
   container: HTMLElement,
-  config?: WaveConfigInput
+  config?: EmbedConfigSource
 ): EmbedHandle {
   const resolvedConfig = config ?? (JSON.parse(BAKED_CONFIG) as WaveConfig);
   return mountWave(container, resolvedConfig);

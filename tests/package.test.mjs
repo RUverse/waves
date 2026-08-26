@@ -4,8 +4,70 @@ import test from 'node:test';
 import {
   DEFAULT_WAVE_CONFIG,
   createWaveConfig,
+  decodeWaveConfig,
+  encodeWaveConfig,
   mountWave
 } from '../lib-dist/index.js';
+
+const COMPLETE_CONFIG_INPUT = {
+  seed: 42,
+  amplitude: 52.125,
+  wavelength: 0.03,
+  frequency: 0.75,
+  period: 0.04,
+  rotation: 15,
+  curvature: 0.2,
+  glitch: 0.3,
+  spacing: 1.2,
+  thickness: 8,
+  taper: 0.4,
+  waveCount: 7,
+  waveColor: 'rgba(255, 240, 220, 0.5)',
+  backgroundColor: 'transparent',
+  vertexStep: 3,
+  variations: {
+    amplitude: 0.1,
+    wavelength: 0.2,
+    frequency: 0.3,
+    period: 0.4,
+    rotation: 0.5,
+    curvature: 0.6,
+    spacing: 0.7,
+    thickness: 0.8
+  }
+};
+
+test('waves:v1 defaults are an explicit frozen format snapshot', () => {
+  assert.deepEqual(DEFAULT_WAVE_CONFIG, {
+    seed: 0,
+    amplitude: 40,
+    wavelength: 0.02,
+    frequency: 0.5,
+    period: 0.05,
+    rotation: 0,
+    curvature: 0,
+    glitch: 0,
+    spacing: 1,
+    thickness: 4,
+    taper: 0,
+    waveCount: 5,
+    waveColor: '#ffffff',
+    backgroundColor: '#000000',
+    vertexStep: 5,
+    variations: {
+      amplitude: 0,
+      wavelength: 0,
+      frequency: 0,
+      period: 0,
+      rotation: 0,
+      curvature: 0,
+      spacing: 0,
+      thickness: 0
+    }
+  });
+  assert.equal(Object.isFrozen(DEFAULT_WAVE_CONFIG), true);
+  assert.equal(Object.isFrozen(DEFAULT_WAVE_CONFIG.variations), true);
+});
 
 test('createWaveConfig normalizes partial and invalid input', () => {
   const config = createWaveConfig({
@@ -28,9 +90,130 @@ test('createWaveConfig normalizes partial and invalid input', () => {
   assert.doesNotThrow(() => JSON.stringify(config));
 });
 
+test('encodeWaveConfig emits exact canonical v1 output', () => {
+  assert.equal(encodeWaveConfig(), 'waves:v1:{}');
+  assert.throws(
+    () => encodeWaveConfig('waves:v1:{"s":5}'),
+    /requires an object configuration/
+  );
+  assert.equal(
+    encodeWaveConfig(COMPLETE_CONFIG_INPUT),
+    'waves:v1:{"s":42,"a":52.125,"w":0.03,"f":0.75,"p":0.04,"r":15,"c":0.2,"g":0.3,"sp":1.2,"th":8,"tp":0.4,"n":7,"wc":"rgba(255, 240, 220, 0.5)","bg":"transparent","vs":3,"v":{"a":0.1,"w":0.2,"f":0.3,"p":0.4,"r":0.5,"c":0.6,"sp":0.7,"th":0.8}}'
+  );
+  assert.equal(
+    encodeWaveConfig({ amplitude: 40, seed: 9, variations: { thickness: 0.25 } }),
+    'waves:v1:{"s":9,"v":{"th":0.25}}'
+  );
+});
+
+test('codec encoding is deterministic and round trips every field', () => {
+  const reordered = {
+    variations: {
+      thickness: 0.8,
+      spacing: 0.7,
+      curvature: 0.6,
+      rotation: 0.5,
+      period: 0.4,
+      frequency: 0.3,
+      wavelength: 0.2,
+      amplitude: 0.1
+    },
+    vertexStep: 3,
+    backgroundColor: 'transparent',
+    waveColor: 'rgba(255, 240, 220, 0.5)',
+    waveCount: 7,
+    taper: 0.4,
+    thickness: 8,
+    spacing: 1.2,
+    glitch: 0.3,
+    curvature: 0.2,
+    rotation: 15,
+    period: 0.04,
+    frequency: 0.75,
+    wavelength: 0.03,
+    amplitude: 52.125,
+    seed: 42
+  };
+  const encoded = encodeWaveConfig(COMPLETE_CONFIG_INPUT);
+
+  assert.equal(encodeWaveConfig(reordered), encoded);
+  assert.deepEqual(decodeWaveConfig(encoded), createWaveConfig(COMPLETE_CONFIG_INPUT));
+  assert.deepEqual(decodeWaveConfig(` \n${encoded}\t `), createWaveConfig(COMPLETE_CONFIG_INPUT));
+  assert.deepEqual(decodeWaveConfig('waves:v1:{"n":999,"v":{"a":2}}'),
+    createWaveConfig({ waveCount: 999, variations: { amplitude: 2 } }));
+});
+
+test('decodeWaveConfig rejects unsupported, malformed, and unknown payloads', () => {
+  const invalidValues = [
+    null,
+    'waves:v2:{}',
+    'waves:v1x:{}',
+    'wave:v1:{}',
+    'waves:v1:',
+    'waves:v1:{',
+    'waves:v1:null',
+    'waves:v1:[]',
+    'waves:v1:1',
+    'waves:v1:"config"',
+    'waves:v1:{"unknown":1}',
+    'waves:v1:{"__proto__":{}}',
+    'waves:v1:{"s":1e999}',
+    'waves:v1:{"s":"1"}',
+    'waves:v1:{"a":null}',
+    'waves:v1:{"wc":1}',
+    'waves:v1:{"bg":"  "}',
+    'waves:v1:{"v":null}',
+    'waves:v1:{"v":[]}',
+    'waves:v1:{"v":1}',
+    'waves:v1:{"v":{"unknown":1}}',
+    'waves:v1:{"v":{"a":"0.5"}}'
+  ];
+
+  for (const value of invalidValues) {
+    assert.throws(() => decodeWaveConfig(value), TypeError, String(value));
+  }
+
+  for (const alias of ['s', 'a', 'w', 'f', 'p', 'r', 'c', 'g', 'sp', 'th', 'tp', 'n', 'vs']) {
+    assert.throws(
+      () => decodeWaveConfig(`waves:v1:${JSON.stringify({ [alias]: 'invalid' })}`),
+      TypeError,
+      alias
+    );
+  }
+  for (const alias of ['a', 'w', 'f', 'p', 'r', 'c', 'sp', 'th']) {
+    assert.throws(
+      () => decodeWaveConfig(`waves:v1:${JSON.stringify({ v: { [alias]: null } })}`),
+      TypeError,
+      `v.${alias}`
+    );
+  }
+});
+
 test('the package can be imported without browser globals', () => {
   assert.equal(typeof mountWave, 'function');
+  assert.equal(encodeWaveConfig({ seed: 7 }), 'waves:v1:{"s":7}');
+  assert.equal(decodeWaveConfig('waves:v1:{"s":7}').seed, 7);
   assert.throws(() => mountWave({}), /browser DOM/);
+});
+
+test('mounting an object and its encoded string produces equivalent canvas calls', () => {
+  const env = installFakeDom();
+  try {
+    const objectHost = new env.HTMLElement();
+    const stringHost = new env.HTMLElement();
+    const objectHandle = mountWave(objectHost, COMPLETE_CONFIG_INPUT);
+    const stringHandle = mountWave(stringHost, encodeWaveConfig(COMPLETE_CONFIG_INPUT));
+
+    assert.deepEqual(
+      objectHost.children[0].context.calls,
+      stringHost.children[0].context.calls
+    );
+
+    objectHandle.destroy();
+    stringHandle.destroy();
+  } finally {
+    env.restore();
+  }
 });
 
 test('seeded rendering is deterministic and changes with the seed', () => {
@@ -89,6 +272,106 @@ test('mounting, updating, replacing, and destroying clean up safely', () => {
     assert.equal(env.rafCallbacks.size, 0);
     assert.ok(env.resizeObservers.every((observer) => observer.disconnected));
     assert.ok(env.intersectionObservers.every((observer) => observer.disconnected));
+  } finally {
+    env.restore();
+  }
+});
+
+test('string updates replace the full config while object updates remain partial merges', () => {
+  const env = installFakeDom();
+  try {
+    const initial = {
+      seed: 3,
+      amplitude: 75,
+      wavelength: 0.08,
+      waveCount: 4,
+      waveColor: '#abcdef',
+      variations: { amplitude: 0.4, rotation: 0.2 }
+    };
+
+    const objectHost = new env.HTMLElement();
+    const objectHandle = mountWave(objectHost, initial);
+    const beforeObjectUpdate = objectHost.children[0].context.calls.length;
+    objectHandle.update({ seed: 4 });
+
+    const expectedMergedHost = new env.HTMLElement();
+    const expectedMergedHandle = mountWave(expectedMergedHost, { ...initial, seed: 4 });
+    assert.deepEqual(
+      objectHost.children[0].context.calls.slice(beforeObjectUpdate),
+      expectedMergedHost.children[0].context.calls
+    );
+
+    const stringHost = new env.HTMLElement();
+    const stringHandle = mountWave(stringHost, initial);
+    const beforeStringUpdate = stringHost.children[0].context.calls.length;
+    const replacement = encodeWaveConfig({ seed: 8, waveCount: 2 });
+    stringHandle.update(replacement);
+
+    const expectedReplacementHost = new env.HTMLElement();
+    const expectedReplacementHandle = mountWave(expectedReplacementHost, replacement);
+    assert.deepEqual(
+      stringHost.children[0].context.calls.slice(beforeStringUpdate),
+      expectedReplacementHost.children[0].context.calls
+    );
+
+    objectHandle.destroy();
+    expectedMergedHandle.destroy();
+    stringHandle.destroy();
+    expectedReplacementHandle.destroy();
+  } finally {
+    env.restore();
+  }
+});
+
+test('failed string updates leave the mounted wave unchanged and operational', () => {
+  const env = installFakeDom();
+  try {
+    const initial = {
+      seed: 12,
+      amplitude: 66,
+      waveCount: 3,
+      variations: { spacing: 0.25 }
+    };
+    const host = new env.HTMLElement();
+    const handle = mountWave(host, initial);
+    const canvas = host.children[0];
+    const callsBeforeFailure = [...canvas.context.calls];
+
+    assert.throws(() => handle.update('waves:v1:{"a":"invalid"}'), TypeError);
+    assert.equal(host.children.length, 1);
+    assert.equal(host.children[0], canvas);
+    assert.deepEqual(canvas.context.calls, callsBeforeFailure);
+    assert.equal(env.rafCallbacks.size, 1);
+
+    const beforeRecovery = canvas.context.calls.length;
+    handle.update({ seed: 13 });
+    const expectedHost = new env.HTMLElement();
+    const expectedHandle = mountWave(expectedHost, { ...initial, seed: 13 });
+    assert.deepEqual(
+      canvas.context.calls.slice(beforeRecovery),
+      expectedHost.children[0].context.calls
+    );
+
+    handle.destroy();
+    expectedHandle.destroy();
+  } finally {
+    env.restore();
+  }
+});
+
+test('failed string remounts preserve the existing instance', () => {
+  const env = installFakeDom();
+  try {
+    const host = new env.HTMLElement();
+    const handle = mountWave(host, { seed: 21 });
+    const canvas = host.children[0];
+
+    assert.throws(() => mountWave(host, 'waves:v2:{}'), TypeError);
+    assert.equal(host.children.length, 1);
+    assert.equal(host.children[0], canvas);
+    assert.equal(env.rafCallbacks.size, 1);
+
+    handle.destroy();
   } finally {
     env.restore();
   }

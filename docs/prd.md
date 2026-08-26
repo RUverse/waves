@@ -90,7 +90,9 @@ Users can adjust the parameters that control wave behavior and appearance:
 #### 3.1 Panel Display
 - Collapsible control panel positioned at the bottom-left of the screen
 - Semi-transparent design that doesn't obstruct the wave view
-- Collapse button integrated with action buttons (right side with spacing)
+- The Basic/Pro mode switch appears below the app description and above saved waves
+- Compact icon-only Hide UI, GitHub, Support, and About buttons share one row on desktop and a two-by-two grid on mobile, with GitHub and Support on top
+- External-link buttons remain transparent until hovered, and hovering any sidebar action reveals its title above the controls until the pointer leaves
 - Menu button appears when panel is hidden to reopen it
 - Keyboard shortcut: Spacebar to toggle panel visibility
 
@@ -162,12 +164,24 @@ Users can adjust the parameters that control wave behavior and appearance:
 - Currently includes toggle for showing/hiding slider values
 - Icon: Gear/settings symbol
 
-#### 5.6 Export
-- Opens export modal for exporting configurations
-- Exports PNG images at phone, desktop, or custom resolutions
-- Generates self-contained JavaScript and React embed snippets
-- Embed previews use the same renderer shipped by the public package
-- Icon: Download/arrow down symbol
+#### 5.6 Share
+- Opens the Share modal on the Config tab every time
+- Orders the available tabs as Config, Image, and Embed
+- Config displays the current portable compact configuration string in a labelled,
+  readonly monospaced field, with a Copy config action and a safe external link to
+  the `@ruverse/waves` npm package
+- Config explains that web apps can consume the copied string through
+  `@ruverse/waves`, including the install command and direct `mountWave()` or
+  `handle.update()` usage
+- Config preview rendering mounts from the displayed compact string so the editor
+  exercises the same public decoding path as package consumers
+- Clipboard feedback reports success only after a successful copy, offers an
+  actionable failure state, supports the existing fallback for unavailable or
+  denied Clipboard API access, and resets when the tab or value changes
+- Image exports PNG files at phone, desktop, or custom resolutions
+- Embed generates self-contained JavaScript and React snippets
+- Image and Embed retain their existing preview and generation behavior
+- Icon: Share symbol
 
 ---
 
@@ -186,7 +200,7 @@ Users can adjust the parameters that control wave behavior and appearance:
   - "Save config"
   - "Save as new config"
   - "Settings"
-  - "Export"
+  - "Share"
   - "Delete wave" (on configuration tabs)
 
 #### 6.3 Responsive Design
@@ -205,8 +219,16 @@ Users can adjust the parameters that control wave behavior and appearance:
 
 #### 7.2 Public API
 - `createWaveConfig(overrides)` creates a complete normalized configuration
-- `mountWave(container, config)` mounts a responsive animated canvas
-- Mounted instances support partial configuration updates and idempotent destruction
+- `encodeWaveConfig(config)` normalizes and encodes a deterministic configuration
+  as a canonical `waves:v1:` compact string containing only non-default values
+- `decodeWaveConfig(value)` validates and decodes a supported compact string into
+  a complete normalized configuration without evaluating code
+- `mountWave(container, config)` mounts a responsive animated canvas from either
+  an object configuration or a complete compact string snapshot
+- Mounted instances support partial object updates, complete compact-string
+  replacement, and idempotent destruction
+- `createWaveConfig()` remains object-only and keeps its existing normalization
+  semantics
 
 #### 7.3 Runtime Behavior
 - Package imports are safe in server-rendered applications until mounting begins
@@ -244,6 +266,13 @@ Users can adjust the parameters that control wave behavior and appearance:
 2. OR manually adjust all parameters
 3. Use "Reset Seed" to generate new random variations
 4. Create new configurations from scratch
+
+### Sharing a Portable Configuration
+1. Open Share; Config is selected even after a prior Image or Embed session
+2. Copy the displayed `waves:v1:` compact string
+3. Install `@ruverse/waves` in another web project
+4. Pass the string directly to `mountWave()` or `handle.update()` to reproduce the
+   same deterministic configuration
 
 ---
 

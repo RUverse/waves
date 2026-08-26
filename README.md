@@ -2,7 +2,7 @@
 
 [Open Waves](https://waves.ruverse.ai/)
 
-A deterministic animated-wave renderer and visual editor. The reusable renderer is published as `@ruverse/waves`; the Svelte app in this repository is its configuration and export UI.
+A deterministic animated-wave renderer and visual editor. The reusable renderer is published as `@ruverse/waves`; the Svelte app is the source for portable configurations, images, and embeds.
 
 ## Package
 
@@ -12,10 +12,33 @@ Install the package:
 npm install @ruverse/waves
 ```
 
-Mount a wave into any sized element:
+Copy a compact string from the editor's Share menu and mount it directly into
+any sized element:
 
 ```js
-import { createWaveConfig, mountWave } from '@ruverse/waves';
+import { mountWave } from '@ruverse/waves';
+
+const compact = 'waves:v1:{"s":42,"a":52,"n":7,"bg":"transparent"}';
+const handle = mountWave(document.querySelector('#waves'), compact);
+
+// Compact strings are complete snapshots, so omitted values return to defaults.
+handle.update('waves:v1:{"s":84}');
+
+// Object updates remain partial merges with the mounted configuration.
+handle.update({ waveCount: 5 });
+
+handle.destroy();
+```
+
+Create, encode, and decode compact strings programmatically:
+
+```js
+import {
+  createWaveConfig,
+  decodeWaveConfig,
+  encodeWaveConfig,
+  mountWave
+} from '@ruverse/waves';
 
 const config = createWaveConfig({
   seed: 42,
@@ -30,16 +53,17 @@ const config = createWaveConfig({
   }
 });
 
-const handle = mountWave(document.querySelector('#waves'), config);
-
-// Replace the configuration without creating another canvas.
-handle.update({ ...config, seed: 84 });
-
-// Remove the canvas and all listeners/animation work.
-handle.destroy();
+const compact = encodeWaveConfig(config);
+const normalized = decodeWaveConfig(compact);
+mountWave(document.querySelector('#waves'), compact);
 ```
 
-The container controls the rendered size and must have non-zero width and height. Configuration objects are JSON-safe, and the same configuration and seed always produce the same per-wave variations. The runtime has no dependencies, pauses while offscreen, respects reduced-motion preferences, and can be imported during server rendering as long as `mountWave()` is called only in the browser.
+The default configuration encodes as `waves:v1:{}`. The codec validates aliases
+and payload types without evaluating code, and can be used during server
+rendering. The container controls the rendered size and must have non-zero width
+and height. The runtime has no dependencies, pauses while offscreen, respects
+reduced-motion preferences, and accesses browser globals only after
+`mountWave()` is called.
 
 Build and test the publishable package:
 
@@ -49,8 +73,8 @@ bun run test:package
 npm pack --dry-run
 ```
 
-Version `0.1.0` is available from the public npm registry. Repository builds
-prepare and attest release artifacts but do not publish them automatically.
+Repository builds prepare and attest release artifacts but do not publish them
+automatically.
 
 ## Releases
 
@@ -66,7 +90,10 @@ maintainer review. It does not publish to npm automatically. See
 
 ## Visual editor
 
-The editor lets you customize amplitude, wavelength, frequency, period, rotation, curvature, glitch, spacing, thickness, taper, colors, variation, and wave count. Configurations can be saved locally or exported as an image or self-contained web embed.
+The editor lets you customize amplitude, wavelength, frequency, period,
+rotation, curvature, glitch, spacing, thickness, taper, colors, variation, and
+wave count. Configurations can be saved locally or shared as a portable compact
+string, image, or self-contained web embed.
 
 ## Run Locally
 
