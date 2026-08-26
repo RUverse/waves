@@ -90,7 +90,9 @@ Users can adjust the parameters that control wave behavior and appearance:
 #### 3.1 Panel Display
 - Collapsible control panel positioned at the bottom-left of the screen
 - Semi-transparent design that doesn't obstruct the wave view
-- Collapse button integrated with action buttons (right side with spacing)
+- The Basic/Pro mode switch appears below the app description and above saved waves
+- Compact icon-only Hide UI, GitHub, Support, and About buttons share one row on desktop and a two-by-two grid on mobile, with GitHub and Support on top
+- External-link buttons remain transparent until hovered, and hovering any sidebar action reveals its title above the controls until the pointer leaves
 - Menu button appears when panel is hidden to reopen it
 - Keyboard shortcut: Spacebar to toggle panel visibility
 

@@ -117,12 +117,21 @@ ignored `.env`, using `.env.example` as the portable template.
 App.svelte (State Management & p5.js Integration)
 └── ControlPanel.svelte (Layout & Prop Management)
     ├── ConfigTabs.svelte (Saved Configuration Display)
+    ├── ModeToggle.svelte (Basic/Pro Switch)
+    ├── SidebarControls.svelte (Sidebar Actions)
     └── Actions.svelte (Action Buttons)
         ├── Reset Seed Button
         ├── Reset Config Button
         ├── Save Button
         └── Save as New Button (conditional)
 ```
+
+The sidebar keeps a fixed responsive width. `ModeToggle.svelte` sits between the
+app description and saved waves. `SidebarControls.svelte` owns the icon-only
+Hide UI, GitHub, Support, and About actions at the bottom. The actions use four
+columns on desktop and a two-by-two mobile grid with GitHub and Support on top.
+Hover state is local to the component and drives a fixed-height title area that
+clears when the pointer leaves an action.
 
 ### State Management
 

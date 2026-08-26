@@ -6,7 +6,9 @@
   import Actions from './Actions.svelte';
   import ConfigTabs from './ConfigTabs.svelte';
   import Configurations from './Configurations.svelte';
+  import ModeToggle from './ModeToggle.svelte';
   import ResetIcon from './ResetIcon.svelte';
+  import SidebarControls from './SidebarControls.svelte';
   import type { Wave } from '$lib/configStorage';
   import {
     DEFAULT_AMPLITUDE,
@@ -131,6 +133,7 @@
   export let onResetCurvatureVariation: () => void;
   export let onResetSpacingVariation: () => void;
   export let onResetThicknessVariation: () => void;
+
 </script>
 
 <!-- Control Panel with Config Tabs -->
@@ -167,6 +170,8 @@
           </p>
         </header>
 
+        <ModeToggle {nerdMode} {onToggleNerdMode} />
+
         <div class="flex flex-col gap-2 min-h-0 overflow-y-auto">
           <ConfigTabs
             waves={savedWaves}
@@ -196,70 +201,7 @@
 
         <div class="flex-1"></div>
 
-        <!-- Compact segmented switch: either half toggles the mode. -->
-        <div
-          class="flex w-full items-center rounded-lg border border-white/10 bg-white/5 p-0.5 sm:hidden"
-          role="radiogroup"
-          aria-label="Mode"
-        >
-          <button
-            role="radio"
-            aria-label="Core"
-            aria-checked={!nerdMode}
-            title="Toggle mode"
-            onclick={() => onToggleNerdMode(!nerdMode)}
-            class="min-w-0 rounded-md py-0.5 text-[10px] font-medium leading-4 transition-all {!nerdMode ? 'flex-1 px-1 bg-white/25 text-white' : 'w-4 px-0 text-white/55'}"
-          >
-            {#if !nerdMode}Core{/if}
-          </button>
-          <button
-            role="radio"
-            aria-label="Pro"
-            aria-checked={nerdMode}
-            title="Toggle mode"
-            onclick={() => onToggleNerdMode(!nerdMode)}
-            class="min-w-0 rounded-md py-0.5 text-[10px] font-medium leading-4 transition-all {nerdMode ? 'flex-1 px-1 bg-white/25 text-white' : 'w-4 px-0 text-white/55'}"
-          >
-            {#if nerdMode}Pro{/if}
-          </button>
-        </div>
-
-        <!-- Desktop Core / Pro segmented switch -->
-        <div
-          class="hidden w-full items-center rounded-lg border border-white/10 bg-white/5 p-0.5 sm:flex"
-          role="radiogroup"
-          aria-label="Mode"
-        >
-          <button
-            role="radio"
-            aria-checked={!nerdMode}
-            onclick={() => onToggleNerdMode(false)}
-            class="min-w-0 flex-1 rounded-md px-1 py-0.5 text-[10px] font-medium leading-4 transition-colors {!nerdMode ? 'bg-white/25 text-white' : 'text-white/55 hover:text-white'}"
-          >
-            Basic
-          </button>
-          <button
-            role="radio"
-            aria-checked={nerdMode}
-            onclick={() => onToggleNerdMode(true)}
-            class="min-w-0 flex-1 rounded-md px-1 py-0.5 text-[10px] font-medium leading-4 transition-colors {nerdMode ? 'bg-white/25 text-white' : 'text-white/55 hover:text-white'}"
-          >
-            Pro
-          </button>
-        </div>
-
-        <Button
-          onclick={onTogglePanel}
-          variant="ghost"
-          class="glass-btn group flex items-center justify-center sm:justify-start gap-2 w-full h-9 px-0 sm:px-2.5 rounded-lg text-[11px] font-medium"
-          title="Hide UI"
-        >
-          <!-- Chevron Left Icon -->
-          <svg class="text-white/55 transition-colors group-hover:text-white" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <polyline points="13,5 8,10 13,15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-          <span class="hidden text-white/55 transition-colors group-hover:text-white sm:inline">Hide UI</span>
-        </Button>
+        <SidebarControls onHidePanel={onTogglePanel} />
       </div>
 
       <!-- Divider -->
