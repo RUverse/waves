@@ -47,6 +47,10 @@ Ruwaves has two deliverables in one repository:
 - Preserve canonical `waves:v1:` encoding and continue decoding v1 strings in
   future versions. String mounts and updates are complete snapshots; object
   updates remain partial merges. Keep `createWaveConfig()` object-only.
+- Keep the `waves:v1:` omission and decoding defaults frozen inside the package
+  codec and independent from editor UI constants. A v1 baseline change requires
+  a new format prefix. `WaveConfigSource` intentionally accepts general strings;
+  runtime decoding validates dynamic values from URLs, storage, and APIs.
 - Persist `variationSeed` with editor state and saved configurations. Legacy
   configurations without a seed normalize to `0`.
 - Package imports must remain SSR-safe: accessing browser globals is allowed

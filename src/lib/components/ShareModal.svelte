@@ -27,6 +27,7 @@
     phone: { width: 1080, height: 1920 },
     desktop: { width: 3840, height: 2160 },
   };
+  const TAB_ORDER: Tab[] = ['config', 'image', 'embed'];
 
   let activeTab: Tab = 'config';
   let embedFormat: EmbedFormat = 'javascript';
@@ -35,7 +36,10 @@
   let customHeight = 1080;
   let isExporting = false;
   let previewContainer: HTMLElement;
+  let previewContent: HTMLElement;
   let configTabButton: HTMLButtonElement;
+  let imageTabButton: HTMLButtonElement;
+  let embedTabButton: HTMLButtonElement;
   let embedPreviewHandle: EmbedHandle | null = null;
   let compactConfig = '';
   let wasOpen = false;
@@ -44,6 +48,7 @@
   let snippet = '';
   let copied = false;
   let copyFailed = false;
+  let manualCopySelected = false;
   let copyTimer: ReturnType<typeof setTimeout> | null = null;
   let previewResizeFrame: number | null = null;
   let copyFeedbackKey = '';
@@ -91,11 +96,11 @@
       embedPreviewHandle.destroy();
       embedPreviewHandle = null;
     }
-    if (previewContainer) previewContainer.innerHTML = '';
+    if (previewContent) previewContent.innerHTML = '';
   }
 
   function updatePreview() {
-    if (!previewContainer) return;
+    if (!previewContainer || !previewContent) return;
     clearPreview();
     if (activeTab === 'image') {
       updateImagePreview();
@@ -136,7 +141,7 @@
     canvas.style.top = '50%';
     canvas.style.transform = 'translate(-50%, -50%)';
 
-    previewContainer.appendChild(canvas);
+    previewContent.appendChild(canvas);
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
@@ -169,7 +174,7 @@
     // public decode path; Embed retains its baked object snapshot behavior.
     const holder = document.createElement('div');
     holder.className = 'embed-preview-holder';
-    previewContainer.appendChild(holder);
+    previewContent.appendChild(holder);
     embedPreviewHandle = mountEmbed(
       holder,
       activeTab === 'config' ? compactConfig : config
@@ -232,6 +237,7 @@ ${sn}
     copyTimer = null;
     copied = false;
     copyFailed = false;
+    manualCopySelected = false;
   }
 
   function selectTab(tab: Tab) {
@@ -240,8 +246,35 @@ ${sn}
     resetCopyFeedback();
   }
 
+  function getTabButton(tab: Tab): HTMLButtonElement {
+    if (tab === 'config') return configTabButton;
+    if (tab === 'image') return imageTabButton;
+    return embedTabButton;
+  }
+
+  function handleTabKeydown(event: KeyboardEvent, tab: Tab) {
+    const currentIndex = TAB_ORDER.indexOf(tab);
+    let nextTab: Tab | null = null;
+
+    if (event.key === 'ArrowRight') {
+      nextTab = TAB_ORDER[(currentIndex + 1) % TAB_ORDER.length];
+    } else if (event.key === 'ArrowLeft') {
+      nextTab = TAB_ORDER[(currentIndex - 1 + TAB_ORDER.length) % TAB_ORDER.length];
+    } else if (event.key === 'Home') {
+      nextTab = TAB_ORDER[0];
+    } else if (event.key === 'End') {
+      nextTab = TAB_ORDER[TAB_ORDER.length - 1];
+    }
+
+    if (!nextTab) return;
+    event.preventDefault();
+    selectTab(nextTab);
+    tick().then(() => getTabButton(nextTab)?.focus());
+  }
+
   async function handleCopy(value: string, fieldId: string) {
     let ok = false;
+    let selectedForManualCopy = false;
     try {
       await navigator.clipboard.writeText(value);
       ok = true;
@@ -251,6 +284,7 @@ ${sn}
       if (ta) {
         ta.focus();
         ta.select();
+        selectedForManualCopy = true;
         try {
           ok = document.execCommand('copy');
         } catch {
@@ -263,12 +297,17 @@ ${sn}
     if (ok) {
       copied = true;
       copyFailed = false;
+      manualCopySelected = false;
       copyTimer = setTimeout(() => (copied = false), 1500);
     } else {
       // Don't claim success — tell the user to copy manually from the textarea.
       copyFailed = true;
       copied = false;
-      copyTimer = setTimeout(() => (copyFailed = false), 3000);
+      manualCopySelected = selectedForManualCopy;
+      copyTimer = setTimeout(() => {
+        copyFailed = false;
+        manualCopySelected = false;
+      }, 3000);
     }
   }
 
@@ -372,35 +411,54 @@ ${sn}
       <div class="flex gap-1 mb-6 border-b border-white/10" role="tablist" aria-label="Share options">
         <button
           bind:this={configTabButton}
+          id="share-tab-config"
           type="button"
           role="tab"
           aria-selected={activeTab === 'config'}
+          aria-controls="share-panel-config"
+          tabindex={activeTab === 'config' ? 0 : -1}
           class="px-4 py-2 text-sm {activeTab === 'config' ? 'text-white border-b-2 border-white' : 'text-white text-opacity-50'}"
           onclick={() => selectTab('config')}
+          onkeydown={(event) => handleTabKeydown(event, 'config')}
         >
           Config
         </button>
         <button
+          bind:this={imageTabButton}
+          id="share-tab-image"
           type="button"
           role="tab"
           aria-selected={activeTab === 'image'}
+          aria-controls="share-panel-image"
+          tabindex={activeTab === 'image' ? 0 : -1}
           class="px-4 py-2 text-sm {activeTab === 'image' ? 'text-white border-b-2 border-white' : 'text-white text-opacity-50'}"
           onclick={() => selectTab('image')}
+          onkeydown={(event) => handleTabKeydown(event, 'image')}
         >
           Image
         </button>
         <button
+          bind:this={embedTabButton}
+          id="share-tab-embed"
           type="button"
           role="tab"
           aria-selected={activeTab === 'embed'}
+          aria-controls="share-panel-embed"
+          tabindex={activeTab === 'embed' ? 0 : -1}
           class="px-4 py-2 text-sm {activeTab === 'embed' ? 'text-white border-b-2 border-white' : 'text-white text-opacity-50'}"
           onclick={() => selectTab('embed')}
+          onkeydown={(event) => handleTabKeydown(event, 'embed')}
         >
           Embed
         </button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div
+        id={`share-panel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`share-tab-${activeTab}`}
+        class="grid grid-cols-1 md:grid-cols-3 gap-6"
+      >
         <!-- Left Column: Selection and Inputs -->
         <div class="min-w-0 md:col-span-2 space-y-6">
           {#if activeTab === 'config'}
@@ -425,11 +483,15 @@ ${sn}
                 variant="ghost"
                 class="glass-btn is-active h-9 w-full px-5 rounded-lg text-sm font-medium"
               >
-                {copied ? 'Config copied!' : copyFailed ? 'Select and press Ctrl/Cmd+C' : 'Copy config'}
+                {copied ? 'Config copied!' : copyFailed ? (manualCopySelected ? 'Press Ctrl/Cmd+C' : 'Copy manually') : 'Copy config'}
               </Button>
               <div aria-live="polite" class="min-h-4 text-xs text-white/65">
                 {#if copyFailed}
-                  Automatic copy failed. The config is selected for manual copying.
+                  {#if manualCopySelected}
+                    Automatic copy failed. The config is selected for manual copying.
+                  {:else}
+                    Automatic copy failed. Select the config field and press Ctrl/Cmd+C.
+                  {/if}
                 {:else if copied}
                   The displayed config was copied to your clipboard.
                 {/if}
@@ -636,10 +698,11 @@ ${sn}
             bind:this={previewContainer}
             class="relative border border-white/20 rounded-lg p-4 flex items-center justify-center flex-1 min-h-40 overflow-hidden"
           >
+            <div bind:this={previewContent} class="absolute inset-0" aria-hidden="true"></div>
             {#if activeTab === 'image' && !onRenderWave}
-              <span class="text-white text-sm opacity-50">Preview unavailable</span>
+              <span class="relative z-10 text-white text-sm opacity-50">Preview unavailable</span>
             {:else if (activeTab === 'config' || isEmbedTab) && !onGetShareConfig}
-              <span class="text-white text-sm opacity-50">Preview unavailable</span>
+              <span class="relative z-10 text-white text-sm opacity-50">Preview unavailable</span>
             {/if}
           </div>
           {#if activeTab === 'image'}
@@ -684,7 +747,7 @@ ${sn}
             variant="ghost"
             class="glass-btn is-active h-9 w-full sm:w-auto px-5 rounded-lg text-sm font-medium whitespace-nowrap"
           >
-            {copied ? 'Copied!' : copyFailed ? 'Press Ctrl+C' : 'Copy code'}
+            {copied ? 'Copied!' : copyFailed ? (manualCopySelected ? 'Press Ctrl/Cmd+C' : 'Copy manually') : 'Copy code'}
           </Button>
         {/if}
       </div>

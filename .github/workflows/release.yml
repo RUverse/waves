@@ -87,6 +87,7 @@ jobs:
             const config = module.createWaveConfig({ seed: 7, waveCount: 4 });
             if (config.seed !== 7 || config.waveCount !== 4) throw new Error("Packed runtime smoke test failed");
             const encoded = module.encodeWaveConfig(config);
+            // Exact output also guards the frozen v1 omission baseline and key order.
             if (encoded !== "waves:v1:{\"s\":7,\"n\":4}") throw new Error("Packed codec encoding failed");
             if (module.decodeWaveConfig(encoded).seed !== 7) throw new Error("Packed codec decoding failed");
 
@@ -94,8 +95,9 @@ jobs:
             for (const name of ["WaveConfigString", "WaveConfigSource"]) {
               if (!declarations.includes(name)) throw new Error(`Missing public declaration: ${name}`);
             }
-            if (!/update\(config: WaveConfigSource\): void/.test(declarations) ||
-                !/config\?: WaveConfigSource/.test(declarations)) {
+            const compactDeclarations = declarations.replace(/\s+/g, "");
+            if (!compactDeclarations.includes("update(config:WaveConfigSource):void;") ||
+                !compactDeclarations.includes("mountWave(container:HTMLElement,config?:WaveConfigSource):WaveHandle;")) {
               throw new Error("Packed source declarations are stale");
             }
           '

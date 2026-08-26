@@ -92,11 +92,13 @@ browser globals, which keeps them safe during SSR.
 
 ### Compact Configuration Codec
 
-`encodeWaveConfig()` first delegates to `createWaveConfig()`, then emits a
-`waves:v1:` prefix followed by minified JSON. The payload contains only values
-that differ from `DEFAULT_WAVE_CONFIG`; top-level aliases and nested variation
-aliases are inserted in their documented canonical order. Numeric values retain
-JavaScript's normal JSON precision.
+`encodeWaveConfig()` rejects string input, delegates object input to
+`createWaveConfig()`, then emits a `waves:v1:` prefix followed by minified JSON.
+The payload contains only values that differ from `DEFAULT_WAVE_CONFIG`;
+top-level aliases and nested variation aliases are inserted in their documented
+canonical order. Numeric values retain JavaScript's normal JSON precision. The
+v1 omission and decoding defaults are a literal package snapshot, independent
+from editor UI constants, and require a new prefix if they ever change.
 
 `decodeWaveConfig()` trims surrounding whitespace, requires the exact v1
 prefix, parses JSON without evaluation, rejects non-object payloads, unknown
@@ -113,7 +115,9 @@ The compatibility embed wrapper accepts explicit object or compact-string
 sources while retaining the baked placeholder used by existing self-contained
 snippets. The Share modal's Config tab pairs its copied string with the npm
 install command and direct `mountWave()`/`WaveHandle.update()` guidance so the
-editor documents the same source path it previews.
+editor documents the same source path it previews. Its tabs implement the ARIA
+tab/tabpanel keyboard pattern, and preview runtime nodes are isolated from
+Svelte-owned unavailable-state content.
 
 ### Package Release Pipeline
 

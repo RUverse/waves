@@ -37,6 +37,38 @@ const COMPLETE_CONFIG_INPUT = {
   }
 };
 
+test('waves:v1 defaults are an explicit frozen format snapshot', () => {
+  assert.deepEqual(DEFAULT_WAVE_CONFIG, {
+    seed: 0,
+    amplitude: 40,
+    wavelength: 0.02,
+    frequency: 0.5,
+    period: 0.05,
+    rotation: 0,
+    curvature: 0,
+    glitch: 0,
+    spacing: 1,
+    thickness: 4,
+    taper: 0,
+    waveCount: 5,
+    waveColor: '#ffffff',
+    backgroundColor: '#000000',
+    vertexStep: 5,
+    variations: {
+      amplitude: 0,
+      wavelength: 0,
+      frequency: 0,
+      period: 0,
+      rotation: 0,
+      curvature: 0,
+      spacing: 0,
+      thickness: 0
+    }
+  });
+  assert.equal(Object.isFrozen(DEFAULT_WAVE_CONFIG), true);
+  assert.equal(Object.isFrozen(DEFAULT_WAVE_CONFIG.variations), true);
+});
+
 test('createWaveConfig normalizes partial and invalid input', () => {
   const config = createWaveConfig({
     seed: Number.NaN,
@@ -60,6 +92,10 @@ test('createWaveConfig normalizes partial and invalid input', () => {
 
 test('encodeWaveConfig emits exact canonical v1 output', () => {
   assert.equal(encodeWaveConfig(), 'waves:v1:{}');
+  assert.throws(
+    () => encodeWaveConfig('waves:v1:{"s":5}'),
+    /requires an object configuration/
+  );
   assert.equal(
     encodeWaveConfig(COMPLETE_CONFIG_INPUT),
     'waves:v1:{"s":42,"a":52.125,"w":0.03,"f":0.75,"p":0.04,"r":15,"c":0.2,"g":0.3,"sp":1.2,"th":8,"tp":0.4,"n":7,"wc":"rgba(255, 240, 220, 0.5)","bg":"transparent","vs":3,"v":{"a":0.1,"w":0.2,"f":0.3,"p":0.4,"r":0.5,"c":0.6,"sp":0.7,"th":0.8}}'

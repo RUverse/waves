@@ -1,19 +1,6 @@
 import {
   AMPLITUDE_RANGE,
   CURVATURE_RANGE,
-  DEFAULT_AMPLITUDE,
-  DEFAULT_BACKGROUND_COLOR,
-  DEFAULT_CURVATURE,
-  DEFAULT_FREQUENCY,
-  DEFAULT_GLITCH,
-  DEFAULT_PERIOD,
-  DEFAULT_ROTATION,
-  DEFAULT_SPACING,
-  DEFAULT_TAPER,
-  DEFAULT_THICKNESS,
-  DEFAULT_WAVELENGTH,
-  DEFAULT_WAVE_COLOR,
-  DEFAULT_WAVE_COUNT,
   FREQUENCY_RANGE,
   PERIOD_RANGE,
   ROTATION_RANGE,
@@ -65,6 +52,10 @@ export type WaveConfigInput = Partial<Omit<WaveConfig, 'variations'>> & {
 };
 
 export type WaveConfigString = `waves:v1:${string}`;
+
+// This intentionally accepts general strings so values loaded from URLs,
+// storage, or APIs do not need unsafe casts. Runtime decoding remains the
+// authoritative validation boundary; WaveConfigString describes codec output.
 export type WaveConfigSource = WaveConfigInput | string;
 
 export interface WaveHandle {
@@ -72,7 +63,9 @@ export interface WaveHandle {
   destroy(): void;
 }
 
-const DEFAULT_VARIATIONS: WaveVariations = Object.freeze({
+// This is the permanent omission/decoding baseline for waves:v1:. Keep it
+// independent from editor UI defaults; changing it requires a new prefix.
+const V1_DEFAULT_VARIATIONS: WaveVariations = Object.freeze({
   amplitude: 0,
   wavelength: 0,
   frequency: 0,
@@ -83,23 +76,25 @@ const DEFAULT_VARIATIONS: WaveVariations = Object.freeze({
   thickness: 0
 });
 
+// Literal values are deliberate: editor slider/reset defaults may evolve, but
+// omitted v1 fields must always decode to this exact public package snapshot.
 export const DEFAULT_WAVE_CONFIG: WaveConfig = Object.freeze({
   seed: 0,
-  amplitude: DEFAULT_AMPLITUDE,
-  wavelength: DEFAULT_WAVELENGTH,
-  frequency: DEFAULT_FREQUENCY,
-  period: DEFAULT_PERIOD,
-  rotation: DEFAULT_ROTATION,
-  curvature: DEFAULT_CURVATURE,
-  glitch: DEFAULT_GLITCH,
-  spacing: DEFAULT_SPACING,
-  thickness: DEFAULT_THICKNESS,
-  taper: DEFAULT_TAPER,
-  waveCount: DEFAULT_WAVE_COUNT,
-  waveColor: DEFAULT_WAVE_COLOR,
-  backgroundColor: DEFAULT_BACKGROUND_COLOR,
+  amplitude: 40,
+  wavelength: 0.02,
+  frequency: 0.5,
+  period: 0.05,
+  rotation: 0,
+  curvature: 0,
+  glitch: 0,
+  spacing: 1,
+  thickness: 4,
+  taper: 0,
+  waveCount: 5,
+  waveColor: '#ffffff',
+  backgroundColor: '#000000',
   vertexStep: 5,
-  variations: DEFAULT_VARIATIONS
+  variations: V1_DEFAULT_VARIATIONS
 });
 
 const CONFIG_PREFIX = 'waves:v1:';
@@ -136,7 +131,7 @@ const VARIATION_ALIASES = [
   ['th', 'thickness']
 ] as const;
 
-const CONFIG_ALIASES = new Set([
+const CONFIG_ALIAS_SET = new Set<string>([
   ...NUMBER_ALIASES.map(([alias]) => alias),
   ...STRING_ALIASES.map(([alias]) => alias),
   'v'
@@ -164,8 +159,11 @@ export function createWaveConfig(overrides: WaveConfigInput = {}): WaveConfig {
   const sourceVariations = overrides.variations ?? {};
   const variations = {} as WaveVariations;
 
-  for (const key of Object.keys(DEFAULT_VARIATIONS) as Array<keyof WaveVariations>) {
-    variations[key] = variationOr(sourceVariations[key], DEFAULT_VARIATIONS[key]);
+  for (const key of Object.keys(V1_DEFAULT_VARIATIONS) as Array<keyof WaveVariations>) {
+    variations[key] = variationOr(
+      sourceVariations[key],
+      V1_DEFAULT_VARIATIONS[key]
+    );
   }
 
   return {
@@ -229,10 +227,14 @@ function requireNonEmptyString(value: unknown, alias: string): string {
 export function encodeWaveConfig(
   config: WaveConfigInput = {}
 ): WaveConfigString {
+  if (typeof config === 'string') {
+    throw new TypeError('encodeWaveConfig() requires an object configuration');
+  }
   const normalized = createWaveConfig(config);
   const payload: Record<string, unknown> = {};
 
   for (const [alias, field] of NUMBER_ALIASES) {
+    // `vs` is emitted after color aliases to preserve the documented order.
     if (alias === 'vs') continue;
     if (normalized[field] !== DEFAULT_WAVE_CONFIG[field]) {
       payload[alias] = normalized[field];
@@ -249,7 +251,7 @@ export function encodeWaveConfig(
 
   const variations: Record<string, number> = {};
   for (const [alias, field] of VARIATION_ALIASES) {
-    if (normalized.variations[field] !== DEFAULT_VARIATIONS[field]) {
+    if (normalized.variations[field] !== V1_DEFAULT_VARIATIONS[field]) {
       variations[alias] = normalized.variations[field];
     }
   }
@@ -280,7 +282,7 @@ export function decodeWaveConfig(value: string): WaveConfig {
   }
 
   for (const alias of Object.keys(payload)) {
-    if (!CONFIG_ALIASES.has(alias)) {
+    if (!CONFIG_ALIAS_SET.has(alias)) {
       throw new TypeError(`Unknown wave config alias "${alias}"`);
     }
   }
