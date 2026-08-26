@@ -111,7 +111,9 @@ as complete snapshots. Decoding and resolving a string update happen before
 runtime state is mutated, so an invalid string leaves the mounted wave intact.
 The compatibility embed wrapper accepts explicit object or compact-string
 sources while retaining the baked placeholder used by existing self-contained
-snippets.
+snippets. The Share modal's Config tab pairs its copied string with the npm
+install command and direct `mountWave()`/`WaveHandle.update()` guidance so the
+editor documents the same source path it previews.
 
 ### Package Release Pipeline
 

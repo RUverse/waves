@@ -434,15 +434,27 @@ ${sn}
                   The displayed config was copied to your clipboard.
                 {/if}
               </div>
-              <a
-                href="https://www.npmjs.com/package/@ruverse/waves"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex text-sm text-white/75 underline underline-offset-4 hover:text-white focus-visible:text-white"
-              >
-                @ruverse/waves npm package
-                <span class="sr-only"> (opens in a new tab)</span>
-              </a>
+              <div class="space-y-2 rounded-lg border border-white/15 bg-white/5 p-3 text-xs leading-relaxed text-white/70">
+                <p>
+                  Use this <span class="font-mono text-white/85">waves:v1:</span> string directly
+                  in your web app with
+                  <a
+                    href="https://www.npmjs.com/package/@ruverse/waves"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-medium text-white underline underline-offset-4 hover:text-white/80 focus-visible:text-white/80"
+                  >
+                    @ruverse/waves
+                    <span class="sr-only"> npm package (opens in a new tab)</span>
+                  </a>.
+                </p>
+                <code class="block overflow-x-auto rounded bg-black/25 px-2.5 py-2 font-mono text-[11px] text-white/85">npm install @ruverse/waves</code>
+                <p>
+                  Pass the copied value to
+                  <code class="font-mono text-white/85">mountWave(container, configString)</code>
+                  or <code class="font-mono text-white/85">handle.update(configString)</code>.
+                </p>
+              </div>
             </div>
           {:else if activeTab === 'image'}
             <!-- Resolution Preset Selection -->

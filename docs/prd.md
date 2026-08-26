@@ -170,6 +170,9 @@ Users can adjust the parameters that control wave behavior and appearance:
 - Config displays the current portable compact configuration string in a labelled,
   readonly monospaced field, with a Copy config action and a safe external link to
   the `@ruverse/waves` npm package
+- Config explains that web apps can consume the copied string through
+  `@ruverse/waves`, including the install command and direct `mountWave()` or
+  `handle.update()` usage
 - Config preview rendering mounts from the displayed compact string so the editor
   exercises the same public decoding path as package consumers
 - Clipboard feedback reports success only after a successful copy, offers an
