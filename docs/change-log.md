@@ -1,6 +1,7 @@
 # Change Log
 
 ## August 26, 2026
+- Added Share-first portable `waves:v1:` configuration strings with strict package encoding/decoding, direct string mounting and updates, and a string-backed editor preview
 - Moved the Basic/Pro switch below the app description and kept icon-only Hide UI, GitHub, Support, and About actions at the bottom, with transient hover titles and a roomier two-row mobile layout
 
 ## August 15, 2026

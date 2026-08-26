@@ -36,9 +36,10 @@ ruwaves/
 │   │   │   │   ├── label/
 │   │   │   │   ├── slider/
 │   │   │   │   └── switch/
-│   │   │   ├── Actions.svelte    # Action buttons (reset, save)
+│   │   │   ├── Actions.svelte    # Reset, shuffle, save, and share actions
 │   │   │   ├── ConfigTabs.svelte # Saved configuration tabs
-│   │   │   └── ControlPanel.svelte # Main control panel
+│   │   │   ├── ControlPanel.svelte # Main control panel
+│   │   │   └── ShareModal.svelte # Config, image, and embed sharing
 │   │   ├── configStorage.ts     # Configuration persistence logic
 │   │   ├── constants.ts         # Application constants and defaults
 │   │   ├── storage.ts           # Local storage utilities
@@ -80,12 +81,37 @@ The public configuration is compact and JSON-safe. A numeric seed plus nested
 variation strengths are resolved into private per-wave arrays at runtime.
 Editor UI toggles and cached arrays are not part of the public API.
 
-The package exports `createWaveConfig()`, `mountWave()`,
-`DEFAULT_WAVE_CONFIG`, and the related TypeScript config and handle types.
-Mounted instances own their canvas, animation frame, observers, and media-query
-listener. They support partial updates, clean repeated mounting, reduced motion,
-offscreen pausing, HiDPI scaling, and idempotent destruction. Importing the
-module does not access browser globals, which keeps SSR imports safe.
+The package exports `createWaveConfig()`, `encodeWaveConfig()`,
+`decodeWaveConfig()`, `mountWave()`, `DEFAULT_WAVE_CONFIG`, and the related
+TypeScript config, compact-string, source, and handle types. Mounted instances
+own their canvas, animation frame, observers, and media-query listener. They
+support partial object updates, complete compact-string replacement, clean
+repeated mounting, reduced motion, offscreen pausing, HiDPI scaling, and
+idempotent destruction. Importing the module and using the codec do not access
+browser globals, which keeps them safe during SSR.
+
+### Compact Configuration Codec
+
+`encodeWaveConfig()` first delegates to `createWaveConfig()`, then emits a
+`waves:v1:` prefix followed by minified JSON. The payload contains only values
+that differ from `DEFAULT_WAVE_CONFIG`; top-level aliases and nested variation
+aliases are inserted in their documented canonical order. Numeric values retain
+JavaScript's normal JSON precision.
+
+`decodeWaveConfig()` trims surrounding whitespace, requires the exact v1
+prefix, parses JSON without evaluation, rejects non-object payloads, unknown
+aliases, non-finite numbers, empty color strings, and invalid nested variation
+objects, then delegates expanded values to `createWaveConfig()` for clamping and
+normalization. Missing aliases resolve to package defaults.
+
+The runtime routes both mounts and updates through one source-normalization
+helper. Object mounts normalize from defaults and object updates merge over the
+current normalized configuration, including nested variations. Strings decode
+as complete snapshots. Decoding and resolving a string update happen before
+runtime state is mutated, so an invalid string leaves the mounted wave intact.
+The compatibility embed wrapper accepts explicit object or compact-string
+sources while retaining the baked placeholder used by existing self-contained
+snippets.
 
 ### Package Release Pipeline
 
@@ -100,8 +126,10 @@ runner:
    has no runtime dependencies.
 2. Run Svelte and TypeScript checks and build the editor application.
 3. Build and test the reusable Canvas runtime.
-4. Create the npm tarball, reject development-only content, and import its ESM
-   entry in Node without browser globals.
+4. Create the npm tarball, reject development-only content, import its ESM
+   entry in Node without browser globals, exercise the packed codec exports,
+   and confirm declarations expose `WaveConfigString`, `WaveConfigSource`, and
+   the broadened `mountWave()`/`WaveHandle.update()` source signatures.
 5. Create a provenance attestation and attach the tarball to a draft GitHub
    Release.
 
@@ -115,15 +143,15 @@ ignored `.env`, using `.env.example` as the portable template.
 
 ```
 App.svelte (State Management & p5.js Integration)
-└── ControlPanel.svelte (Layout & Prop Management)
-    ├── ConfigTabs.svelte (Saved Configuration Display)
-    ├── ModeToggle.svelte (Basic/Pro Switch)
-    ├── SidebarControls.svelte (Sidebar Actions)
-    └── Actions.svelte (Action Buttons)
-        ├── Reset Seed Button
-        ├── Reset Config Button
-        ├── Save Button
-        └── Save as New Button (conditional)
+├── ControlPanel.svelte (Layout & Prop Management)
+│   ├── ConfigTabs.svelte (Saved Configuration Display)
+│   ├── ModeToggle.svelte (Basic/Pro Switch)
+│   ├── SidebarControls.svelte (Sidebar Actions)
+│   └── Actions.svelte (Reset, Shuffle, Save, and Share)
+└── ShareModal.svelte
+    ├── Config (compact string, copy action, string-backed preview)
+    ├── Image (PNG resolution and export workflow)
+    └── Embed (JavaScript and React self-contained snippets)
 ```
 
 The sidebar keeps a fixed responsive width. `ModeToggle.svelte` sits between the
@@ -528,6 +556,9 @@ User clicks config tab
 - [ ] Save updates existing configuration when active
 - [ ] Save as New always creates new configuration
 - [ ] Config tabs load correctly
+- [ ] Share reopens on Config and displays, copies, and previews the same string
+- [ ] Clipboard success, fallback, and failure feedback are accurate
+- [ ] Image and Embed behavior remains unchanged
 - [ ] Delete removes configurations
 - [ ] Reset Seed changes wave patterns
 - [ ] Reset Config restores defaults
@@ -551,7 +582,7 @@ User clicks config tab
 
 ### Current Limitations
 - Configuration names are auto-generated (timestamp-based)
-- No configuration export/import
+- No configuration-string import UI
 - No undo/redo
 - No configuration search/filter
 - Limited to localStorage (no cloud sync)

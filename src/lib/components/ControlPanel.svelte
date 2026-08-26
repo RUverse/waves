@@ -67,7 +67,7 @@
   export let onSaveConfig: () => void;
   export let onSaveConfigAsNew: () => void;
   export let onTogglePanel: () => void;
-  export let onOpenExport: () => void;
+  export let onOpenShare: () => void;
   export let nerdMode: boolean;
   export let onToggleNerdMode: (value: boolean) => void;
   export let onResetAmplitude: () => void;
@@ -214,7 +214,7 @@
           {onReset}
           {onResetConfig}
           {onSaveConfig}
-          {onOpenExport}
+          {onOpenShare}
           {activeWaveId}
           {hasUnsavedChanges}
           resetDisabled={allSettingsAtDefault}

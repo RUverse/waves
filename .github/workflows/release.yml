@@ -69,14 +69,35 @@ jobs:
           fi
           smoke_dir="$(mktemp -d)"
           tar -xzf "$PACKAGE_PATH" -C "$smoke_dir"
-          PACKAGE_ENTRY="$smoke_dir/package/lib-dist/index.js" node --input-type=module -e '
+          PACKAGE_ENTRY="$smoke_dir/package/lib-dist/index.js" \
+          PACKAGE_TYPES="$smoke_dir/package/lib-dist/types/package/index.d.ts" \
+          node --input-type=module -e '
+            import { readFile } from "node:fs/promises";
             import { pathToFileURL } from "node:url";
             const module = await import(pathToFileURL(process.env.PACKAGE_ENTRY));
-            for (const name of ["DEFAULT_WAVE_CONFIG", "createWaveConfig", "mountWave"]) {
+            for (const name of [
+              "DEFAULT_WAVE_CONFIG",
+              "createWaveConfig",
+              "encodeWaveConfig",
+              "decodeWaveConfig",
+              "mountWave"
+            ]) {
               if (!(name in module)) throw new Error(`Missing public export: ${name}`);
             }
             const config = module.createWaveConfig({ seed: 7, waveCount: 4 });
             if (config.seed !== 7 || config.waveCount !== 4) throw new Error("Packed runtime smoke test failed");
+            const encoded = module.encodeWaveConfig(config);
+            if (encoded !== "waves:v1:{\"s\":7,\"n\":4}") throw new Error("Packed codec encoding failed");
+            if (module.decodeWaveConfig(encoded).seed !== 7) throw new Error("Packed codec decoding failed");
+
+            const declarations = await readFile(process.env.PACKAGE_TYPES, "utf8");
+            for (const name of ["WaveConfigString", "WaveConfigSource"]) {
+              if (!declarations.includes(name)) throw new Error(`Missing public declaration: ${name}`);
+            }
+            if (!/update\(config: WaveConfigSource\): void/.test(declarations) ||
+                !/config\?: WaveConfigSource/.test(declarations)) {
+              throw new Error("Packed source declarations are stale");
+            }
           '
 
       - name: Attest package provenance

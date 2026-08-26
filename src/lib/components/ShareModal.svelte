@@ -3,6 +3,7 @@
   import { onDestroy, tick } from 'svelte';
   import EMBED_RUNTIME from 'virtual:wave-embed-runtime';
   import { mount as mountEmbed, type EmbedConfig, type EmbedHandle } from '../../embed';
+  import { encodeWaveConfig } from '../../package';
 
   export let isOpen: boolean;
   export let onClose: () => void;
@@ -10,11 +11,11 @@
   // Callback to render the wave at a specific resolution (Image tab)
   export let onRenderWave: ((width: number, height: number) => HTMLCanvasElement | null) | null = null;
 
-  // Callback returning a self-contained embed config snapshot (Embed tab)
-  export let onGetEmbedConfig: (() => EmbedConfig) | null = null;
+  // Callback returning the current portable config snapshot (Config/Embed tabs)
+  export let onGetShareConfig: (() => EmbedConfig) | null = null;
 
   type ResolutionPreset = 'phone' | 'desktop' | 'custom';
-  type Tab = 'image' | 'embed';
+  type Tab = 'config' | 'image' | 'embed';
   type EmbedFormat = 'javascript' | 'react';
 
   interface ResolutionConfig {
@@ -27,32 +28,58 @@
     desktop: { width: 3840, height: 2160 },
   };
 
-  let activeTab: Tab = 'image';
+  let activeTab: Tab = 'config';
   let embedFormat: EmbedFormat = 'javascript';
   let selectedRatio: ResolutionPreset = 'desktop';
   let customWidth = 1920;
   let customHeight = 1080;
   let isExporting = false;
   let previewContainer: HTMLElement;
+  let configTabButton: HTMLButtonElement;
   let embedPreviewHandle: EmbedHandle | null = null;
+  let compactConfig = '';
+  let wasOpen = false;
 
-  // Code tab state
+  // Clipboard and embed-code state
   let snippet = '';
   let copied = false;
   let copyFailed = false;
   let copyTimer: ReturnType<typeof setTimeout> | null = null;
   let previewResizeFrame: number | null = null;
+  let copyFeedbackKey = '';
 
-  $: isCodeTab = activeTab === 'embed';
+  $: isEmbedTab = activeTab === 'embed';
+  $: currentCopyValue = activeTab === 'config'
+    ? compactConfig
+    : activeTab === 'embed'
+      ? snippet
+      : '';
+  $: {
+    const nextCopyFeedbackKey = `${activeTab}\u0000${currentCopyValue}`;
+    if (nextCopyFeedbackKey !== copyFeedbackKey) {
+      copyFeedbackKey = nextCopyFeedbackKey;
+      resetCopyFeedback();
+    }
+  }
 
   // Get current resolution based on selection
   $: currentResolution = selectedRatio === 'custom'
     ? { width: customWidth, height: customHeight }
     : RESOLUTIONS[selectedRatio];
 
+  // Every open starts on Config, regardless of the previous session's tab.
+  $: {
+    if (isOpen && !wasOpen) {
+      activeTab = 'config';
+      resetCopyFeedback();
+      tick().then(() => configTabButton?.focus());
+    }
+    wasOpen = isOpen;
+  }
+
   // Rebuild preview when the modal opens or any relevant input changes.
   $: if (isOpen) {
-    void activeTab; void embedFormat; void currentResolution;
+    void activeTab; void embedFormat; void currentResolution; void onGetShareConfig;
     tick().then(() => updatePreview());
   }
   $: if (!isOpen) {
@@ -125,18 +152,28 @@
   }
 
   function updateWavePreview() {
-    if (!onGetEmbedConfig) return;
-    const config = onGetEmbedConfig();
+    if (!onGetShareConfig) return;
+    const config = onGetShareConfig();
 
-    // Keep the copyable code in sync with what the preview shows.
-    snippet = embedFormat === 'react' ? buildReactSnippet(config) : buildEmbedSnippet(config);
+    if (activeTab === 'config') {
+      compactConfig = encodeWaveConfig(config);
+    }
+
+    if (activeTab === 'embed') {
+      // Keep the copyable code in sync with what the preview shows.
+      snippet = embedFormat === 'react' ? buildReactSnippet(config) : buildEmbedSnippet(config);
+    }
 
     // Mount the REAL runtime into a checkerboard holder so translucency is
-    // visible and the preview exercises the exact code the snippet ships.
+    // visible. Config mounts from the string itself, exercising the package's
+    // public decode path; Embed retains its baked object snapshot behavior.
     const holder = document.createElement('div');
     holder.className = 'embed-preview-holder';
     previewContainer.appendChild(holder);
-    embedPreviewHandle = mountEmbed(holder, config);
+    embedPreviewHandle = mountEmbed(
+      holder,
+      activeTab === 'config' ? compactConfig : config
+    );
   }
 
   // Bake the wave's values into the runtime blob, so the emitted code calls
@@ -190,14 +227,27 @@ ${sn}
 </html>`;
   }
 
-  async function handleCopy() {
+  function resetCopyFeedback() {
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = null;
+    copied = false;
+    copyFailed = false;
+  }
+
+  function selectTab(tab: Tab) {
+    if (activeTab === tab) return;
+    activeTab = tab;
+    resetCopyFeedback();
+  }
+
+  async function handleCopy(value: string, fieldId: string) {
     let ok = false;
     try {
-      await navigator.clipboard.writeText(snippet);
+      await navigator.clipboard.writeText(value);
       ok = true;
     } catch {
       // Fallback for insecure origins / denied permission: select + execCommand.
-      const ta = document.getElementById('embed-snippet') as HTMLTextAreaElement | null;
+      const ta = document.getElementById(fieldId) as HTMLTextAreaElement | null;
       if (ta) {
         ta.focus();
         ta.select();
@@ -292,7 +342,7 @@ ${sn}
 
   onDestroy(() => {
     clearPreview();
-    if (copyTimer) clearTimeout(copyTimer);
+    resetCopyFeedback();
     if (previewResizeFrame !== null) cancelAnimationFrame(previewResizeFrame);
   });
 </script>
@@ -313,21 +363,38 @@ ${sn}
       onclick={(e) => e.stopPropagation()}
       role="dialog"
       aria-modal="true"
+      aria-labelledby="share-modal-title"
       tabindex="-1"
     >
-      <h2 class="text-white text-lg font-semibold mb-4">Export Wave</h2>
+      <h2 id="share-modal-title" class="text-white text-lg font-semibold mb-4">Share Wave</h2>
 
       <!-- Tabs -->
-      <div class="flex gap-1 mb-6 border-b border-white/10">
+      <div class="flex gap-1 mb-6 border-b border-white/10" role="tablist" aria-label="Share options">
         <button
+          bind:this={configTabButton}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'config'}
+          class="px-4 py-2 text-sm {activeTab === 'config' ? 'text-white border-b-2 border-white' : 'text-white text-opacity-50'}"
+          onclick={() => selectTab('config')}
+        >
+          Config
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'image'}
           class="px-4 py-2 text-sm {activeTab === 'image' ? 'text-white border-b-2 border-white' : 'text-white text-opacity-50'}"
-          onclick={() => activeTab = 'image'}
+          onclick={() => selectTab('image')}
         >
           Image
         </button>
         <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'embed'}
           class="px-4 py-2 text-sm {activeTab === 'embed' ? 'text-white border-b-2 border-white' : 'text-white text-opacity-50'}"
-          onclick={() => activeTab = 'embed'}
+          onclick={() => selectTab('embed')}
         >
           Embed
         </button>
@@ -336,7 +403,48 @@ ${sn}
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Left Column: Selection and Inputs -->
         <div class="min-w-0 md:col-span-2 space-y-6">
-          {#if activeTab === 'image'}
+          {#if activeTab === 'config'}
+            <div class="space-y-3">
+              <div>
+                <label for="wave-config-string" class="text-white text-sm font-medium block mb-2">
+                  Compact config string
+                </label>
+                <textarea
+                  id="wave-config-string"
+                  readonly
+                  rows="7"
+                  value={compactConfig}
+                  spellcheck="false"
+                  onclick={(e) => e.currentTarget.select()}
+                  class="w-full bg-white/20 border border-white/20 rounded px-3 py-2 text-white text-xs font-mono resize-none break-all"
+                ></textarea>
+              </div>
+              <Button
+                onclick={() => handleCopy(compactConfig, 'wave-config-string')}
+                disabled={!onGetShareConfig || !compactConfig}
+                variant="ghost"
+                class="glass-btn is-active h-9 w-full px-5 rounded-lg text-sm font-medium"
+              >
+                {copied ? 'Config copied!' : copyFailed ? 'Select and press Ctrl/Cmd+C' : 'Copy config'}
+              </Button>
+              <div aria-live="polite" class="min-h-4 text-xs text-white/65">
+                {#if copyFailed}
+                  Automatic copy failed. The config is selected for manual copying.
+                {:else if copied}
+                  The displayed config was copied to your clipboard.
+                {/if}
+              </div>
+              <a
+                href="https://www.npmjs.com/package/@ruverse/waves"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex text-sm text-white/75 underline underline-offset-4 hover:text-white focus-visible:text-white"
+              >
+                @ruverse/waves npm package
+                <span class="sr-only"> (opens in a new tab)</span>
+              </a>
+            </div>
+          {:else if activeTab === 'image'}
             <!-- Resolution Preset Selection -->
             <fieldset>
               <legend class="text-white text-sm font-medium block mb-3">Export Resolution</legend>
@@ -518,7 +626,7 @@ ${sn}
           >
             {#if activeTab === 'image' && !onRenderWave}
               <span class="text-white text-sm opacity-50">Preview unavailable</span>
-            {:else if isCodeTab && !onGetEmbedConfig}
+            {:else if (activeTab === 'config' || isEmbedTab) && !onGetShareConfig}
               <span class="text-white text-sm opacity-50">Preview unavailable</span>
             {/if}
           </div>
@@ -538,7 +646,7 @@ ${sn}
           variant="ghost"
           class="glass-btn h-9 w-full sm:w-auto px-5 rounded-lg text-sm font-medium whitespace-nowrap"
         >
-          {isCodeTab ? 'Close' : 'Cancel'}
+          {activeTab === 'image' ? 'Cancel' : 'Close'}
         </Button>
         {#if activeTab === 'image'}
           <Button
@@ -549,18 +657,18 @@ ${sn}
           >
             {isExporting ? 'Exporting...' : 'Export PNG'}
           </Button>
-        {:else}
+        {:else if activeTab === 'embed'}
           <Button
             onclick={handleDownload}
-            disabled={!onGetEmbedConfig || !snippet}
+            disabled={!onGetShareConfig || !snippet}
             variant="ghost"
             class="glass-btn h-9 w-full sm:w-auto px-5 rounded-lg text-sm font-medium whitespace-nowrap"
           >
             {embedFormat === 'react' ? 'Download .jsx' : 'Download .html'}
           </Button>
           <Button
-            onclick={handleCopy}
-            disabled={!onGetEmbedConfig || !snippet}
+            onclick={() => handleCopy(snippet, 'embed-snippet')}
+            disabled={!onGetShareConfig || !snippet}
             variant="ghost"
             class="glass-btn is-active h-9 w-full sm:w-auto px-5 rounded-lg text-sm font-medium whitespace-nowrap"
           >

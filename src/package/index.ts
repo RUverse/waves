@@ -64,8 +64,11 @@ export type WaveConfigInput = Partial<Omit<WaveConfig, 'variations'>> & {
   variations?: Partial<WaveVariations>;
 };
 
+export type WaveConfigString = `waves:v1:${string}`;
+export type WaveConfigSource = WaveConfigInput | string;
+
 export interface WaveHandle {
-  update(config: WaveConfigInput): void;
+  update(config: WaveConfigSource): void;
   destroy(): void;
 }
 
@@ -98,6 +101,49 @@ export const DEFAULT_WAVE_CONFIG: WaveConfig = Object.freeze({
   vertexStep: 5,
   variations: DEFAULT_VARIATIONS
 });
+
+const CONFIG_PREFIX = 'waves:v1:';
+
+const NUMBER_ALIASES = [
+  ['s', 'seed'],
+  ['a', 'amplitude'],
+  ['w', 'wavelength'],
+  ['f', 'frequency'],
+  ['p', 'period'],
+  ['r', 'rotation'],
+  ['c', 'curvature'],
+  ['g', 'glitch'],
+  ['sp', 'spacing'],
+  ['th', 'thickness'],
+  ['tp', 'taper'],
+  ['n', 'waveCount'],
+  ['vs', 'vertexStep']
+] as const;
+
+const STRING_ALIASES = [
+  ['wc', 'waveColor'],
+  ['bg', 'backgroundColor']
+] as const;
+
+const VARIATION_ALIASES = [
+  ['a', 'amplitude'],
+  ['w', 'wavelength'],
+  ['f', 'frequency'],
+  ['p', 'period'],
+  ['r', 'rotation'],
+  ['c', 'curvature'],
+  ['sp', 'spacing'],
+  ['th', 'thickness']
+] as const;
+
+const CONFIG_ALIASES = new Set([
+  ...NUMBER_ALIASES.map(([alias]) => alias),
+  ...STRING_ALIASES.map(([alias]) => alias),
+  'v'
+]);
+const VARIATION_ALIAS_SET = new Set<string>(
+  VARIATION_ALIASES.map(([alias]) => alias)
+);
 
 const mountedWaves = new WeakMap<HTMLElement, WaveHandle>();
 
@@ -151,6 +197,148 @@ export function createWaveConfig(overrides: WaveConfigInput = {}): WaveConfig {
     ),
     variations
   };
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function hasOwn(value: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function requireFiniteNumber(value: unknown, alias: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new TypeError(`Wave config alias "${alias}" must be a finite number`);
+  }
+  return value;
+}
+
+function requireNonEmptyString(value: unknown, alias: string): string {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new TypeError(`Wave config alias "${alias}" must be a non-empty string`);
+  }
+  return value;
+}
+
+/** Encodes a normalized configuration as a canonical, portable v1 string. */
+export function encodeWaveConfig(
+  config: WaveConfigInput = {}
+): WaveConfigString {
+  const normalized = createWaveConfig(config);
+  const payload: Record<string, unknown> = {};
+
+  for (const [alias, field] of NUMBER_ALIASES) {
+    if (alias === 'vs') continue;
+    if (normalized[field] !== DEFAULT_WAVE_CONFIG[field]) {
+      payload[alias] = normalized[field];
+    }
+  }
+  for (const [alias, field] of STRING_ALIASES) {
+    if (normalized[field] !== DEFAULT_WAVE_CONFIG[field]) {
+      payload[alias] = normalized[field];
+    }
+  }
+  if (normalized.vertexStep !== DEFAULT_WAVE_CONFIG.vertexStep) {
+    payload.vs = normalized.vertexStep;
+  }
+
+  const variations: Record<string, number> = {};
+  for (const [alias, field] of VARIATION_ALIASES) {
+    if (normalized.variations[field] !== DEFAULT_VARIATIONS[field]) {
+      variations[alias] = normalized.variations[field];
+    }
+  }
+  if (Object.keys(variations).length > 0) payload.v = variations;
+
+  return `${CONFIG_PREFIX}${JSON.stringify(payload)}` as WaveConfigString;
+}
+
+/** Validates and decodes a portable v1 string into a complete configuration. */
+export function decodeWaveConfig(value: string): WaveConfig {
+  if (typeof value !== 'string') {
+    throw new TypeError('Wave config must be a string');
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed.startsWith(CONFIG_PREFIX)) {
+    throw new TypeError('Wave config has an invalid or unsupported prefix');
+  }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(trimmed.slice(CONFIG_PREFIX.length));
+  } catch {
+    throw new TypeError('Wave config payload must be valid JSON');
+  }
+  if (!isPlainObject(payload)) {
+    throw new TypeError('Wave config payload must be a plain object');
+  }
+
+  for (const alias of Object.keys(payload)) {
+    if (!CONFIG_ALIASES.has(alias)) {
+      throw new TypeError(`Unknown wave config alias "${alias}"`);
+    }
+  }
+
+  const expanded: WaveConfigInput = {};
+  for (const [alias, field] of NUMBER_ALIASES) {
+    if (hasOwn(payload, alias)) {
+      expanded[field] = requireFiniteNumber(payload[alias], alias);
+    }
+  }
+  for (const [alias, field] of STRING_ALIASES) {
+    if (hasOwn(payload, alias)) {
+      expanded[field] = requireNonEmptyString(payload[alias], alias);
+    }
+  }
+
+  if (hasOwn(payload, 'v')) {
+    const encodedVariations = payload.v;
+    if (!isPlainObject(encodedVariations)) {
+      throw new TypeError('Wave config alias "v" must be a plain object');
+    }
+    for (const alias of Object.keys(encodedVariations)) {
+      if (!VARIATION_ALIAS_SET.has(alias)) {
+        throw new TypeError(`Unknown wave variation alias "${alias}"`);
+      }
+    }
+
+    const variations: Partial<WaveVariations> = {};
+    for (const [alias, field] of VARIATION_ALIASES) {
+      if (hasOwn(encodedVariations, alias)) {
+        variations[field] = requireFiniteNumber(
+          encodedVariations[alias],
+          `v.${alias}`
+        );
+      }
+    }
+    expanded.variations = variations;
+  }
+
+  return createWaveConfig(expanded);
+}
+
+function normalizeWaveConfigSource(
+  source: WaveConfigSource | undefined,
+  currentConfig?: WaveConfig
+): WaveConfig {
+  if (typeof source === 'string') return decodeWaveConfig(source);
+  const input = source ?? {};
+  if (!currentConfig) return createWaveConfig(input);
+
+  return createWaveConfig({
+    ...currentConfig,
+    ...input,
+    variations: {
+      ...currentConfig.variations,
+      ...input.variations
+    }
+  });
 }
 
 interface ResolvedWaveConfig {
@@ -247,7 +435,7 @@ function resolveWaveConfig(config: WaveConfig): ResolvedWaveConfig {
  */
 export function mountWave(
   container: HTMLElement,
-  config: WaveConfigInput = {}
+  config: WaveConfigSource = {}
 ): WaveHandle {
   if (typeof document === 'undefined' || typeof window === 'undefined') {
     throw new Error('mountWave() requires a browser DOM');
@@ -256,6 +444,7 @@ export function mountWave(
     throw new TypeError('mountWave() requires an HTMLElement container');
   }
 
+  const initialConfig = normalizeWaveConfigSource(config);
   mountedWaves.get(container)?.destroy();
 
   const canvas = document.createElement('canvas');
@@ -273,7 +462,7 @@ export function mountWave(
   }
   const ctx: CanvasRenderingContext2D = renderingContext;
 
-  let currentConfig = createWaveConfig(config);
+  let currentConfig = initialConfig;
   let resolved = resolveWaveConfig(currentConfig);
   let cssWidth = 0;
   let cssHeight = 0;
@@ -380,15 +569,10 @@ export function mountWave(
   const handle: WaveHandle = {
     update(nextConfig) {
       if (destroyed) return;
-      currentConfig = createWaveConfig({
-        ...currentConfig,
-        ...nextConfig,
-        variations: {
-          ...currentConfig.variations,
-          ...nextConfig.variations
-        }
-      });
-      resolved = resolveWaveConfig(currentConfig);
+      const next = normalizeWaveConfigSource(nextConfig, currentConfig);
+      const nextResolved = resolveWaveConfig(next);
+      currentConfig = next;
+      resolved = nextResolved;
       offset = 0;
       periodPhases = [];
       resize();

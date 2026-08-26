@@ -39,10 +39,14 @@ Ruwaves has two deliverables in one repository:
 
 ## Public API invariants
 
-- The supported package surface is `createWaveConfig`, `mountWave`,
-  `DEFAULT_WAVE_CONFIG`, `WaveConfig`, `WaveConfigInput`, and `WaveHandle`.
+- The supported package surface is `createWaveConfig`, `encodeWaveConfig`,
+  `decodeWaveConfig`, `mountWave`, `DEFAULT_WAVE_CONFIG`, `WaveConfig`,
+  `WaveConfigInput`, `WaveConfigString`, `WaveConfigSource`, and `WaveHandle`.
 - Configuration objects must remain compact, JSON-safe, and deterministic. The
   same normalized configuration and seed must produce the same wave variations.
+- Preserve canonical `waves:v1:` encoding and continue decoding v1 strings in
+  future versions. String mounts and updates are complete snapshots; object
+  updates remain partial merges. Keep `createWaveConfig()` object-only.
 - Persist `variationSeed` with editor state and saved configurations. Legacy
   configurations without a seed normalize to `0`.
 - Package imports must remain SSR-safe: accessing browser globals is allowed
@@ -50,9 +54,9 @@ Ruwaves has two deliverables in one repository:
 - Preserve responsive container sizing, HiDPI rendering, transparent
   backgrounds, multiple instances, safe repeated mounting, partial updates,
   idempotent destruction, offscreen pausing, and reduced-motion behavior.
-- Keep `WaveConfig` and generated declarations backward compatible within a
-  released minor line. Treat public field removal or semantic changes as a
-  versioned API change.
+- Keep `WaveConfig`, `WaveConfigString`, `WaveConfigSource`, `WaveHandle`, and
+  generated declarations backward compatible within a released minor line.
+  Treat public field removal or semantic changes as a versioned API change.
 - Do not add CDN loading, telemetry, network access, global styles, or automatic
   host-element styling to the package runtime.
 
@@ -70,9 +74,10 @@ location of that checkout.
   stable for the lifetime of one new-tab page.
 - Wave backgrounds remain non-interactive, behind all content, transparent,
   theme-aware, and readable in both light and dark modes.
-- After `@ruverse/waves@0.1.0` is published, replace the sibling `file:`
-  dependency with the compatible registry version; do not publish from an
-  ordinary implementation task unless the user explicitly requests it.
+- After the required `@ruverse/waves` version is verified on npm, replace the
+  sibling `file:` dependency with that compatible registry version; do not
+  publish from an ordinary implementation task unless the user explicitly
+  requests it.
 
 ## Generated files and publishing
 

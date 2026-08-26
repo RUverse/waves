@@ -4,7 +4,7 @@
   export let onReset: () => void;
   export let onResetConfig: () => void;
   export let onSaveConfig: () => void;
-  export let onOpenExport: () => void;
+  export let onOpenShare: () => void;
   export let activeWaveId: string | null;
   export let hasUnsavedChanges: boolean;
   export let resetDisabled: boolean = false;
@@ -13,7 +13,7 @@
     'glass-btn flex flex-col items-center justify-center gap-0.5 w-10 h-10 sm:w-11 sm:h-11 p-0 rounded-lg';
 </script>
 
-<!-- Top action bar: Reset + Shuffle (left), contextual Save + Export (right) -->
+<!-- Top action bar: Reset + Shuffle (left), contextual Save + Share (right) -->
 <div class="flex items-center justify-between gap-2">
   <div class="flex items-center gap-2">
     <Button
@@ -54,13 +54,15 @@
       </Button>
     {/if}
 
-    <Button onclick={onOpenExport} variant="ghost" class={iconBtnClass} title="Export">
-      <!-- Export icon (arrow out of tray) -->
+    <Button onclick={onOpenShare} variant="ghost" class={iconBtnClass} title="Share">
+      <!-- Share icon -->
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8 10V2M8 2L5 5M8 2L11 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M3 9V13C3 13.5523 3.44772 14 4 14H12C12.5523 14 13 13.5523 13 13V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="4" cy="8" r="1.75" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="11.5" cy="3.5" r="1.75" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="11.5" cy="12.5" r="1.75" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M5.5 7.1 10 4.4M5.5 8.9 10 11.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      <span class="text-[10px] leading-none font-light opacity-75">Export</span>
+      <span class="text-[10px] leading-none font-light opacity-75">Share</span>
     </Button>
   </div>
 </div>

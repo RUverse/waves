@@ -4,7 +4,7 @@
   import { onMount } from 'svelte';
   import ControlPanel from '$lib/components/ControlPanel.svelte';
   import SettingsModal from '$lib/components/SettingsModal.svelte';
-  import ExportModal from '$lib/components/ExportModal.svelte';
+  import ShareModal from '$lib/components/ShareModal.svelte';
   import { 
     generateInitialAmplitudes,
     generateCachedVariations,
@@ -149,7 +149,7 @@
   
   // Modal state
   let showSettingsModal = false;
-  let showExportModal = false;
+  let showShareModal = false;
   let nerdMode = savedSettings.nerdMode;
 
   // Color settings
@@ -422,7 +422,7 @@
 
   // Snapshot the current wave into the same compact, seeded configuration used
   // by the public package and self-contained embeds.
-  function getEmbedConfig(): EmbedConfig {
+  function getShareConfig(): EmbedConfig {
     return createWaveConfig({
       seed: variationSeed,
       amplitude,
@@ -452,18 +452,12 @@
     });
   }
 
-  function openExport() {
-    showExportModal = true;
+  function openShare() {
+    showShareModal = true;
   }
 
-  function closeExport() {
-    showExportModal = false;
-  }
-
-  function handleExport() {
-    // TODO: Implement export functionality
-    console.log('Export not yet implemented');
-    closeExport();
+  function closeShare() {
+    showShareModal = false;
   }
 
   onMount(() => {
@@ -511,7 +505,7 @@
         e.preventDefault();
         togglePanel();
       } else if (e.key === 'Escape') {
-        if (showSettingsModal || showExportModal) return;
+        if (showSettingsModal || showShareModal) return;
         togglePanel();
       }
     };
@@ -556,7 +550,7 @@
     onSelectWave={(wave) => applyConfig(waveManagement.selectWave(wave))}
     onDeleteWave={(id) => waveManagement.deleteWave(id)}
     onTogglePanel={togglePanel}
-    onOpenExport={openExport}
+    onOpenShare={openShare}
     {nerdMode}
     onToggleNerdMode={toggleNerdMode}
     onResetAmplitude={() => amplitude = resetAmplitudeValue()}
@@ -597,10 +591,10 @@
     onClose={closeSettings}
   />
 
-  <ExportModal
-    isOpen={showExportModal}
-    onClose={closeExport}
+  <ShareModal
+    isOpen={showShareModal}
+    onClose={closeShare}
     onRenderWave={renderWave}
-    onGetEmbedConfig={getEmbedConfig}
+    onGetShareConfig={getShareConfig}
   />
 </main>
